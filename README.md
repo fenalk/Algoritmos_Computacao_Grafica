@@ -1,2 +1,10 @@
-# Algoritmos_Computacao_Grafica
- Este repositório foi desenvolvido para demonstrar a implementação em Python de alguns algoritmos clássicos de síntese e processamento de imagem da área de de Computação Gráfica
+# Trabalho de Computação Gráfica
+
+Projeto desenvolvido para a disciplina de Computação Gráfica utilizando Python e PySide6.
+
+## Tecnologias
+
+- Python
+- PySide6
+- Pillow
+- NumPy
