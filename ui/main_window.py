@@ -1,3 +1,17 @@
+"""
+Objetivo: Responsável por construir a janela principal da aplicação.
+
+Especificações:
+- A janela principal deve ter um título, tamanho e layout definidos.
+- A janela principal deve conter uma barra de menus, uma barra de status e um widget central.
+- A barra de menus deve ter os menus "Arquivo", "Editar", "Visualizar" e "Ajuda".
+- A barra de status deve exibir mensagens de status.    
+
+Retorno:
+- A classe MainWindow deve herdar de QMainWindow e implementar os métodos necessários para configurar a janela, criar os componentes e organizar o layout.
+
+"""
+
 from PySide6.QtWidgets import (
     QLabel,
     QMainWindow,
@@ -36,7 +50,7 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------
 
     def criar_componentes(self):
-        """Cria todos os componentes da interface."""
+        """Cria todos os componentes d interface."""
 
         # Widget central
         self.central_widget = QWidget()
@@ -54,8 +68,6 @@ class MainWindow(QMainWindow):
         # Barra de status
 
         self.status_bar = QStatusBar()
-        self.status_bar.showMessage("Aplicação iniciada.")
-
         self.status_bar.showMessage("Aplicação iniciada.")
 
         # Título temporário
