@@ -12,22 +12,19 @@ Retorno:
 
 """
 
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QLabel,
     QMainWindow,
-    QMenuBar,
-    QStatusBar,
+    QHBoxLayout,
     QVBoxLayout,
     QWidget,
 )
 
-from PySide6.QtCore import Qt
+from ui.canvas_widget import CanvasWidget
 
 
 class MainWindow(QMainWindow):
-    """
-    Janela principal da aplicação.
-    """
 
     def __init__(self):
         super().__init__()
@@ -38,56 +35,58 @@ class MainWindow(QMainWindow):
 
         self.criar_layout()
 
-    # ------------------------------------------------------------------
+    # -----------------------------------------------------
 
     def configurar_janela(self):
-        """Configura as propriedades da janela."""
 
         self.setWindowTitle("Computação Gráfica")
 
         self.resize(1200, 800)
 
-    # ------------------------------------------------------------------
+    # -----------------------------------------------------
 
     def criar_componentes(self):
-        """Cria todos os componentes d interface."""
 
-        # Widget central
+        self.menuBar().addMenu("Arquivo")
+        self.menuBar().addMenu("Editar")
+        self.menuBar().addMenu("Visualizar")
+        self.menuBar().addMenu("Ajuda")
+
+        self.statusBar().showMessage("Aplicação iniciada.")
+
         self.central_widget = QWidget()
 
-        # Layout principal
-        self.layout_principal = QVBoxLayout()
+        self.layout_principal = QHBoxLayout()
 
-        # Barra de menus
-        self.menu_bar = QMenuBar()
-        self.menu_arquivo = self.menu_bar.addMenu("Arquivo")
-        self.menu_editar = self.menu_bar.addMenu("Editar")
-        self.menu_visualizar = self.menu_bar.addMenu("Visualizar")
-        self.menu_ajuda = self.menu_bar.addMenu("Ajuda")
+        self.canvas = CanvasWidget()
 
-        # Barra de status
+        self.label = QLabel("Painel de ferramentas")
 
-        self.status_bar = QStatusBar()
-        self.status_bar.showMessage("Aplicação iniciada.")
+        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # Título temporário
-        self.label_titulo = QLabel("Projeto de Computação Gráfica")
-
-        self.label_titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-    # ------------------------------------------------------------------
+    # -----------------------------------------------------
 
     def criar_layout(self):
-        """Organiza todos os componentes da interface."""
 
-        # Layout
-        self.layout_principal.addWidget(self.label_titulo)
+        painel = QVBoxLayout()
+
+        painel.addWidget(self.label)
+
+        self.layout_principal.addWidget(self.canvas, 4)
+
+        painel_widget = QWidget()
+        painel_widget.setLayout(painel)
+
+        self.layout_principal.addWidget(painel_widget, 1)
 
         self.central_widget.setLayout(self.layout_principal)
 
-        # MainWindow
-        self.setMenuBar(self.menu_bar)
-
-        self.setStatusBar(self.status_bar)
-
         self.setCentralWidget(self.central_widget)
+
+        self.canvas.desenhar_pixel(0, 0)
+
+        self.canvas.desenhar_pixel(5, 5)
+
+        self.canvas.desenhar_pixel(-8, 3)
+
+        self.canvas.desenhar_pixel(10, -6)
