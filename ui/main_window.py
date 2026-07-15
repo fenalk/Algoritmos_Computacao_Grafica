@@ -1,33 +1,31 @@
 """
-Objetivo: Responsável por construir a janela principal da aplicação.
+Módulo responsável pela janela principal da aplicação.
 
-Especificações:
+Objetivo:
+    Criar a estrutura principal da interface gráfica,
+    integrando canvas, painel de controles e algoritmos.
 
-- configurar_janela(): Configura a janela principal, definindo o título, tamanho e layout.
-
-- criar_componentes(): Cria os componentes da janela principal, incluindo a barra de menus, barra de status e widget central. A barra de menus tem os menus "Arquivo", "Editar", "Visualizar" e "Ajuda". A barra de status deve exibir mensagens de status.  
-
-- criar_layout(): Organiza os componentes na janela principal, definindo o layout e adicionando
-  os widgets necessários.
-
-   
+Especificidades:
+    - Configura a janela principal.
+    - Cria menus.
+    - Cria barra de status.
+    - Integra CanvasWidget.
+    - Integra PainelControles.
 
 Retorno:
-- A classe MainWindow deve herdar de QMainWindow e implementar os métodos necessários para configurar a janela, criar os componentes e organizar o layout.
-
+    A classe MainWindow gerencia a aplicação gráfica.
 """
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QLabel,
     QMainWindow,
     QHBoxLayout,
-    QVBoxLayout,
     QWidget,
 )
 
 from ui.canvas_widget import CanvasWidget
 from ui.painel_controles import PainelControles
+from algoritmos.bresenham import Bresenham
 
 
 class MainWindow(QMainWindow):
@@ -40,6 +38,9 @@ class MainWindow(QMainWindow):
         self.criar_componentes()
 
         self.criar_layout()
+
+        self.conectar_sinais()
+
 
     # -----------------------------------------------------
 
@@ -71,10 +72,6 @@ class MainWindow(QMainWindow):
 
         self.painel = PainelControles()
 
-        self.label = QLabel("Painel de ferramentas")
-
-        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
     # -----------------------------------------------------
 
     def criar_layout(self):
@@ -90,4 +87,52 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(self.central_widget)
 
-        # Apenas para testes
+    
+    # -----------------------------------------------------
+    def conectar_sinais(self):
+
+        self.painel.botao_desenhar.clicked.connect(
+            self.desenhar_bresenham
+        )
+
+        self.painel.botao_limpar.clicked.connect(
+            self.canvas.limpar_canvas
+        )
+
+   # -----------------------------------------------------
+   # ALgoritmo de Bresenham
+
+    def desenhar_bresenham(self):
+
+        try:
+
+            x1 = int(self.painel.campo_x1.text())
+            y1 = int(self.painel.campo_y1.text())
+
+            x2 = int(self.painel.campo_x2.text())
+            y2 = int(self.painel.campo_y2.text())
+
+
+            pontos = Bresenham.calcular_reta(
+                x1,
+                y1,
+                x2,
+                y2
+            )
+
+
+            self.canvas.limpar_canvas()
+
+            self.canvas.desenhar_linha(pontos)
+
+
+            self.statusBar().showMessage(
+                "Linha Bresenham desenhada."
+            )
+
+
+        except ValueError:
+
+            self.statusBar().showMessage(
+                "Informe valores válidos."
+            )
