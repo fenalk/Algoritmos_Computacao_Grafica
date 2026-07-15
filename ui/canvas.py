@@ -1,3 +1,18 @@
+"""
+Objetivo:
+
+Implementar o componente responsável pela renderização dos algoritmos gráficos, permitindo criar a área de desenho, configurar a visualização, desenhar pixels e limpar o canvas.
+
+Especificidades:
+
+Inicializa a cena gráfica, configura o QGraphicsView, desenha pixels nas coordenadas informadas e remove todos os elementos da cena quando necessário.
+
+Retorno:
+
+Os métodos não retornam valores (None), apenas modificam o estado da cena gráfica e sua exibição.
+
+"""
+
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor, QBrush, QPen
 from PySide6.QtWidgets import (
