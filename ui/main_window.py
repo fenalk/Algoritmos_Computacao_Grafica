@@ -2,10 +2,15 @@
 Objetivo: Responsável por construir a janela principal da aplicação.
 
 Especificações:
-- A janela principal deve ter um título, tamanho e layout definidos.
-- A janela principal deve conter uma barra de menus, uma barra de status e um widget central.
-- A barra de menus deve ter os menus "Arquivo", "Editar", "Visualizar" e "Ajuda".
-- A barra de status deve exibir mensagens de status.    
+
+- configurar_janela(): Configura a janela principal, definindo o título, tamanho e layout.
+
+- criar_componentes(): Cria os componentes da janela principal, incluindo a barra de menus, barra de status e widget central. A barra de menus tem os menus "Arquivo", "Editar", "Visualizar" e "Ajuda". A barra de status deve exibir mensagens de status.  
+
+- criar_layout(): Organiza os componentes na janela principal, definindo o layout e adicionando
+  os widgets necessários.
+
+   
 
 Retorno:
 - A classe MainWindow deve herdar de QMainWindow e implementar os métodos necessários para configurar a janela, criar os componentes e organizar o layout.
@@ -22,6 +27,7 @@ from PySide6.QtWidgets import (
 )
 
 from ui.canvas_widget import CanvasWidget
+from ui.painel_controles import PainelControles
 
 
 class MainWindow(QMainWindow):
@@ -46,6 +52,9 @@ class MainWindow(QMainWindow):
     # -----------------------------------------------------
 
     def criar_componentes(self):
+        """
+        Cria os componentes da interface.
+        """
 
         self.menuBar().addMenu("Arquivo")
         self.menuBar().addMenu("Editar")
@@ -60,6 +69,8 @@ class MainWindow(QMainWindow):
 
         self.canvas = CanvasWidget()
 
+        self.painel = PainelControles()
+
         self.label = QLabel("Painel de ferramentas")
 
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -67,26 +78,20 @@ class MainWindow(QMainWindow):
     # -----------------------------------------------------
 
     def criar_layout(self):
-
-        painel = QVBoxLayout()
-
-        painel.addWidget(self.label)
+        """
+        Organiza os componentes da interface.
+        """
 
         self.layout_principal.addWidget(self.canvas, 4)
 
-        painel_widget = QWidget()
-        painel_widget.setLayout(painel)
-
-        self.layout_principal.addWidget(painel_widget, 1)
+        self.layout_principal.addWidget(self.painel, 1)
 
         self.central_widget.setLayout(self.layout_principal)
 
         self.setCentralWidget(self.central_widget)
 
+        # Apenas para testes
         self.canvas.desenhar_pixel(0, 0)
-
         self.canvas.desenhar_pixel(5, 5)
-
         self.canvas.desenhar_pixel(-8, 3)
-
         self.canvas.desenhar_pixel(10, -6)
