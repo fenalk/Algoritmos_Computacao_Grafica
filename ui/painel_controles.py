@@ -80,6 +80,10 @@ class PainelControles(QWidget):
         self.criar_layout()
         self.conectar_sinais()
 
+        self.atualizar_parametros(
+        self.combo_algoritmos.currentText()
+)
+
     # ------------------------------------------------------------------
 
     def criar_componentes(self):
@@ -203,42 +207,55 @@ class PainelControles(QWidget):
 
     def conectar_sinais(self):
         """
-        Conecta os sinais e slots da interface.
+        Conecta os sinais internos do painel.
 
         Especificidades
         ----------------
-        Este método foi criado para centralizar todas as conexões
-        entre os componentes gráficos e suas funcionalidades.
-        As conexões serão implementadas nas próximas etapas do projeto.
+        Realiza conexões relacionadas apenas aos componentes internos
+        do painel.
+
+        A comunicação com a MainWindow será realizada externamente,
+        mantendo a separação de responsabilidades.
 
         Retorno
         -------
         None
         """
 
-        pass
+        self.combo_algoritmos.currentTextChanged.connect(
+            self.atualizar_parametros
+        )
 
     # ------------------------------------------------------------------
 
-    def atualizar_parametros(self):
+    def atualizar_parametros(self, algoritmo):
         """
-        Atualiza dinamicamente os campos de entrada.
+        Atualiza os campos de entrada conforme o algoritmo selecionado.
 
-        Especificidades
-        ----------------
-        Futuramente este método será responsável por alterar
-        os parâmetros exibidos conforme o algoritmo selecionado.
-
-        Exemplos:
-            - Bresenham: X1, Y1, X2, Y2
-            - Círculo: Centro X, Centro Y, Raio
-            - Elipse: Centro X, Centro Y, Raio X, Raio Y
-            - Curva de Bézier: Pontos de controle
-            - Transformações: Tipo e parâmetros
+        Parâmetros
+        ----------
+        algoritmo : str
+            Algoritmo selecionado no ComboBox.
 
         Retorno
         -------
         None
         """
 
-        pass
+        if algoritmo == "Bresenham":
+
+            self.campo_x1.setPlaceholderText(
+                "Digite X1"
+            )
+
+            self.campo_y1.setPlaceholderText(
+                "Digite Y1"
+            )
+
+            self.campo_x2.setPlaceholderText(
+                "Digite X2"
+            )
+
+            self.campo_y2.setPlaceholderText(
+                "Digite Y2"
+            )

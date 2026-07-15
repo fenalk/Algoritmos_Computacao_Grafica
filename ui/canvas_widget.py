@@ -145,6 +145,8 @@ class CanvasWidget(QGraphicsView):
             QGraphicsView.ViewportAnchor.AnchorViewCenter
         )
 
+        self.centerOn(0,0)
+
     # ------------------------------------------------------------------
 
     def mundo_para_tela(self, x: int, y: int) -> tuple[int, int]:
@@ -215,6 +217,8 @@ class CanvasWidget(QGraphicsView):
         y_mundo = round(-y / self.PIXEL_SIZE)
 
         return x_mundo, y_mundo
+    
+
 
     # ------------------------------------------------------------------
 
@@ -262,6 +266,20 @@ class CanvasWidget(QGraphicsView):
 
         self.scene.addItem(pixel_item)
 
+    #------------------------------------------------------------------
+    # Algoritmo de Bresenham
+    def desenhar_linha(
+        self,
+        pontos,
+        cor=Qt.GlobalColor.black,
+    ):
+        """
+        Desenha uma linha a partir da lista de pixels.
+        """
+
+        for x, y in pontos:
+            self.desenhar_pixel(x, y, cor)
+
     # ------------------------------------------------------------------
 
     def limpar_canvas(self):
@@ -279,8 +297,11 @@ class CanvasWidget(QGraphicsView):
         """
 
         self.scene.clear()
+        self.centerOn(0, 0)
 
         ##############
+
+
 
 
     # ------------------------------------------------------------------
