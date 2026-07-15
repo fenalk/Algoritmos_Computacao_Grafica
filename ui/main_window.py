@@ -91,7 +91,3 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.central_widget)
 
         # Apenas para testes
-        self.canvas.desenhar_pixel(0, 0)
-        self.canvas.desenhar_pixel(5, 5)
-        self.canvas.desenhar_pixel(-8, 3)
-        self.canvas.desenhar_pixel(10, -6)
