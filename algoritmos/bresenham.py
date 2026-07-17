@@ -1,14 +1,23 @@
 """
 Algoritmo de Bresenham
 
-Objetivo:
-- Implementar o algoritmo de Bresenham para rasterização de retas utilizando apenas operações inteiras.
+Calcula todos os pixels de uma reta utilizando o algoritmo de Bresenham.
 
-Especificidades:
-- Recebe dois pontos (x1, y1) e (x2, y2) do sistema cartesiano como entrada e calcula todos os pixels pertencentes à reta que conecta esses pontos.
+Parâmetros
+----------
+x1 : int
+    Coordenada X inicial.
+y1 : int
+    Coordenada Y inicial.
+x2 : int
+    Coordenada X final.
+y2 : int
+    Coordenada Y final.
 
-Retorno:
-- Uma lista contendo as coordenadas dos pixels da reta, representadas como tuplas (x, y).
+Retorno
+-------
+list[tuple[int, int]]
+    Lista contendo os pixels da reta.
 """
 
 class Bresenham:
@@ -21,34 +30,40 @@ class Bresenham:
         """
         Objetivo: Calcular os pontos da reta.
 
-        Parâmetros: x1, y1, x2, y2 (int): Coordenadas dos pontos inicial e final da reta.
+        Parâmetros: x1, y1, x2, y2 (int): Coordenadas dos pontos
+        inicial e final da reta.
 
-        Retorno: List[Tuple[int, int]]: Lista de coordenadas dos pixels da reta.
+        Retorno: List[Tuple[int, int]]: Lista de coordenadas dos
+        pixels da reta.
         """
 
         pontos = []
 
+        # Diferença entre os pontos
         dx = abs(x2 - x1)
-        dy = abs (y2 - y1)
+        dy = abs(y2 - y1)
 
+        #Sentido do crescimento da reta
         sx = 1 if x1 < x2 else -1
         sy = 1 if y1 < y2 else -1
 
-        erro = dx - dy 
+        # Variável de erro  
+        erro = dx - dy
 
+        # Percorre todos os pixels da reta até atingir o ponto final (x2, y2).
         while True:
             pontos.append((x1, y1))
 
             if x1 == x2 and y1 == y2:
                 break
 
-            e2 = 2 * erro
-            if e2 > -dy:
+            erro_duplo = 2 * erro
+            if erro_duplo > -dy:
                 erro -= dy
                 x1 += sx
-            
-            if e2 < dx:
+
+            if erro_duplo < dx:
                 erro += dx
                 y1 += sy
 
-        return pontos 
+        return pontos

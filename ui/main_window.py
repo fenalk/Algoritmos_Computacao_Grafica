@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from algoritmos.bresenham import Bresenham
 from ui.canvas_widget import CanvasWidget
 from ui.painel_controles import PainelControles
 
@@ -24,50 +25,33 @@ class MainWindow(QMainWindow):
         self.configurar_janela()
         self.criar_componentes()
         self.criar_layout()
+        self.conectar_sinais()
 
     # -----------------------------------------------------
 
     def configurar_janela(self):
-        """
-        Configura a janela principal.
-        """
-
         self.setWindowTitle("Computação Gráfica")
         self.resize(1200, 800)
 
     # -----------------------------------------------------
 
     def criar_componentes(self):
-        """
-        Cria os componentes da interface.
-        """
-
-        # Barra de menus
         self.menuBar().addMenu("Arquivo")
         self.menuBar().addMenu("Editar")
         self.menuBar().addMenu("Visualizar")
         self.menuBar().addMenu("Ajuda")
 
-        # Barra de status
         self.statusBar().showMessage("Aplicação iniciada.")
 
-        # Widget central
         self.central_widget = QWidget()
-
-        # Layout principal
         self.layout_principal = QHBoxLayout()
 
-        # Componentes principais
         self.canvas = CanvasWidget()
         self.painel = PainelControles()
 
     # -----------------------------------------------------
 
     def criar_layout(self):
-        """
-        Organiza os componentes da interface.
-        """
-
         self.layout_principal.addWidget(self.canvas, 4)
         self.layout_principal.addWidget(self.painel, 1)
 
@@ -85,12 +69,46 @@ class MainWindow(QMainWindow):
         )
 
     # -----------------------------------------------------
+    # Novo: liga os botões do painel às ações do canvas/algoritmos.
+
+    def conectar_sinais(self):
+        self.painel.botao_desenhar.clicked.connect(self.executar_algoritmo)
+        self.painel.botao_limpar.clicked.connect(self.canvas.limpar_canvas)
+
+    # -----------------------------------------------------
+
+    def executar_algoritmo(self):
+        """
+        Lê o algoritmo e os parâmetros escolhidos no painel e manda
+        o canvas desenhar o resultado.
+        """
+
+        algoritmo = self.painel.algoritmo_selecionado()
+        parametros = self.painel.obter_parametros()
+
+        if parametros is None:
+            self.statusBar().showMessage(
+                "Preencha X1, Y1, X2 e Y2 com números inteiros."
+            )
+            return
+
+        x1, y1, x2, y2 = parametros
+
+        if algoritmo == "Bresenham":
+            pontos = Bresenham.calcular_reta(x1, y1, x2, y2)
+            self.canvas.desenhar_linha(pontos)
+            self.statusBar().showMessage(
+                f"Reta de ({x1}, {y1}) a ({x2}, {y2}) desenhada "
+                f"com {len(pontos)} pixels."
+            )
+        else:
+            self.statusBar().showMessage(
+                f"Algoritmo '{algoritmo}' ainda não implementado."
+            )
+
+    # -----------------------------------------------------
 
     def resizeEvent(self, event):
-        """
-        Ajusta o canvas quando a janela é redimensionada.
-        """
-
         super().resizeEvent(event)
 
         self.canvas.fitInView(
