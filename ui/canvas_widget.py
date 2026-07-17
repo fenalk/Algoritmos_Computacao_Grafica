@@ -12,8 +12,8 @@ Funcionalidades:
 - Limpar o canvas.
 
 Retorno:
-- A classe CanvasWidget deve herdar de QGraphicsView e implementar os métodos necessários para criar.
-- configurar e gerenciar a cena gráfica, bem como desenhar pixels e limpar o canvas.
+- A classe CanvasWidget deve herdar de QGraphicsView e implementar os métodos necessários para criar,
+configurar e gerenciar a cena gráfica, bem como desenhar pixels e limpar o canvas.
 """
 
 from PySide6.QtCore import Qt
@@ -30,7 +30,7 @@ class CanvasWidget(QGraphicsView):
     Widget responsável pela renderização dos algoritmos gráficos.
     """
 
-    PIXEL_SIZE = 10
+    PIXEL_SIZE = 20
     LARGURA_CENA = 1200
     ALTURA_CENA = 800
 
@@ -42,6 +42,8 @@ class CanvasWidget(QGraphicsView):
 
         self.criar_cena()
         self.configurar_view()
+        self.desenhar_grade()
+        self.desenhar_eixos()
 
     # ------------------------------------------------------------------
 
@@ -96,8 +98,8 @@ class CanvasWidget(QGraphicsView):
             QGraphicsView.ViewportAnchor.AnchorViewCenter
         )
 
-        # Melhora a renderização das formas
-        self.setRenderHint(QPainter.RenderHint.Antialiasing)
+        # Mantém aspecto de pixels
+        self.setRenderHint(QPainter.RenderHint.Antialiasing, False)
 
     # ------------------------------------------------------------------
 
@@ -124,13 +126,16 @@ class CanvasWidget(QGraphicsView):
 
         pixel_item = QGraphicsRectItem(
             x * self.PIXEL_SIZE,
-            -y * self.PIXEL_SIZE,
+            -((y + 1) * self.PIXEL_SIZE),
             self.PIXEL_SIZE,
             self.PIXEL_SIZE,
         )
 
         pixel_item.setBrush(QBrush(QColor(cor)))
         pixel_item.setPen(QPen(Qt.PenStyle.NoPen))
+
+        # Pixels acima da grade
+        pixel_item.setZValue(1)
 
         self.scene.addItem(pixel_item)
 
@@ -142,3 +147,56 @@ class CanvasWidget(QGraphicsView):
         """
 
         self.scene.clear()
+        self.desenhar_grade()
+        self.desenhar_eixos()
+        self.centerOn(0, 0)
+
+    # ------------------------------------------------------------------
+
+    def desenhar_grade(self):
+        pen = QPen(QColor(220, 220, 220))
+        pen.setWidth(1)
+
+        largura = self.LARGURA_CENA // 2
+        altura = self.ALTURA_CENA // 2
+
+        passo = self.PIXEL_SIZE * 2      # grade duas vezes maior
+
+        for x in range(-largura, largura + 1, passo):
+            linha = self.scene.addLine(x, -altura, x, altura, pen)
+            linha.setZValue(-1)
+
+        for y in range(-altura, altura + 1, passo):
+            linha = self.scene.addLine(-largura, y, largura, y, pen)
+            linha.setZValue(-1)
+
+    # ------------------------------------------------------------------
+
+    def desenhar_eixos(self):
+        """
+        Desenha os eixos X e Y.
+        """
+
+        pen = QPen(Qt.GlobalColor.black)
+        pen.setWidth(2)
+
+        largura = self.LARGURA_CENA // 2
+        altura = self.ALTURA_CENA // 2
+
+        eixo_x = self.scene.addLine(
+            -largura,
+            0,
+            largura,
+            0,
+            pen,
+        )
+        eixo_x.setZValue(0)
+
+        eixo_y = self.scene.addLine(
+            0,
+            -altura,
+            0,
+            altura,
+            pen,
+        )
+        eixo_y.setZValue(0)
