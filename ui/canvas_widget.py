@@ -1,23 +1,3 @@
-"""
-CanvasWidget
-
-Objetivo:
-    Implementar o componente responsável pela renderização dos algoritmos
-    gráficos, fornecendo uma área de desenho baseada em QGraphicsView e
-    QGraphicsScene.
-
-Especificidades:
-    - Inicializar e configurar a cena gráfica;
-    - Configurar a área de visualização (canvas);
-    - Realizar a conversão entre coordenadas do sistema cartesiano
-      (mundo) e coordenadas da tela;
-    - Desenhar pixels na cena;
-    - Limpar o conteúdo do canvas.
-
-Retorno:
-- A classe CanvasWidget deve herdar de QGraphicsView e implementar os métodos necessários para criar,
-configurar e gerenciar a cena gráfica, bem como desenhar pixels e limpar o canvas.
-"""
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QBrush, QColor, QPen
@@ -161,58 +141,39 @@ class CanvasWidget(QGraphicsView):
     ):
         """
         Desenha um pixel na cena.
-
-        Objetivo
-        --------
-        Renderizar um pixel na posição informada utilizando um
-        QGraphicsRectItem.
-
-        Parâmetros
-        ----------
-        x : int
-            Coordenada X no sistema cartesiano.
-
-        y : int
-            Coordenada Y no sistema cartesiano.
-
-        cor : Qt.GlobalColor, opcional
-            Cor utilizada para desenhar o pixel.
-
-        Retorno
-        -------
-        None
         """
+
+        if not self.coordenada_valida(x, y):
+            return
 
         x_tela, y_tela = self.mundo_para_tela(x, y)
 
         pixel_item = QGraphicsRectItem(
-            x * self.PIXEL_SIZE,
-            -((y + 1) * self.PIXEL_SIZE),
+            x_tela,
+            y_tela,
             self.PIXEL_SIZE,
             self.PIXEL_SIZE,
         )
 
         pixel_item.setBrush(QBrush(QColor(cor)))
         pixel_item.setPen(QPen(Qt.PenStyle.NoPen))
-
-        # Pixels acima da grade
         pixel_item.setZValue(1)
 
         self.scene.addItem(pixel_item)
 
-    #------------------------------------------------------------------
-    # Algoritmo de Bresenham
-    def desenhar_linha(
-        self,
-        pontos,
-        cor=Qt.GlobalColor.black,
-    ):
-        """
-        Desenha uma linha a partir da lista de pixels.
-        """
+        #------------------------------------------------------------------
+        # Algoritmo de Bresenham
+        def desenhar_linha(
+            self,
+            pontos,
+            cor=Qt.GlobalColor.black,
+        ):
+            """
+            Desenha uma linha a partir da lista de pixels.
+            """
 
-        for x, y in pontos:
-            self.desenhar_pixel(x, y, cor)
+            for x, y in pontos:
+                self.desenhar_pixel(x, y, cor)
 
     # ------------------------------------------------------------------
 
@@ -284,3 +245,43 @@ class CanvasWidget(QGraphicsView):
             pen,
         )
         eixo_y.setZValue(0)
+
+
+    #------------------------------------------------------------------
+    # Mundo Tela -> Tela Mundo -> Validar Coordenadas Negativas
+    def mundo_para_tela(self, x: int, y: int):
+        
+        """
+        Converte coordenadas cartesianas para coordenadas da tela.
+        """
+
+        return (
+            x * self.PIXEL_SIZE,
+            -(y + 1) * self.PIXEL_SIZE,
+        )
+    
+    def tela_para_mundo(self, x_tela: int, y_tela: int):
+        """
+        Converte coordenadas da tela para coordenadas cartesianas.
+        """
+
+        x = round(x_tela / self.PIXEL_SIZE)
+        y = -(round(y_tela / self.PIXEL_SIZE) + 1)
+
+        return x, y
+    
+    def coordenada_valida(self, x: int, y: int):
+        """
+        Verifica se uma coordenada pertence aos limites da cena.
+        """
+
+        limite_x = self.LARGURA_CENA // (2 * self.PIXEL_SIZE)
+        limite_y = self.ALTURA_CENA // (2 * self.PIXEL_SIZE)
+
+        return (
+            -limite_x <= x < limite_x
+            and
+            -limite_y <= y < limite_y
+        )
+    
+    #------------------------------------------------------------------
