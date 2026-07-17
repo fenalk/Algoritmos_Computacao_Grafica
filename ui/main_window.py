@@ -1,7 +1,9 @@
 """
-Objetivo: Responsável por construir a janela principal da aplicação.
+Módulo responsável pela janela principal da aplicação.
 
-Especificações:
+Objetivo:
+    Criar a estrutura principal da interface gráfica,
+    integrando canvas, painel de controles e algoritmos.
 
 - configurar_janela(): Configura a janela principal, definindo o título, tamanho e layout.
 
@@ -16,7 +18,6 @@ Retorno:
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QLabel,
     QMainWindow,
     QHBoxLayout,
     QWidget,
@@ -24,6 +25,7 @@ from PySide6.QtWidgets import (
 
 from ui.canvas_widget import CanvasWidget
 from ui.painel_controles import PainelControles
+from algoritmos.bresenham import Bresenham
 
 
 class MainWindow(QMainWindow):
@@ -34,6 +36,9 @@ class MainWindow(QMainWindow):
         self.configurar_janela()
         self.criar_componentes()
         self.criar_layout()
+
+        self.conectar_sinais()
+
 
     # -----------------------------------------------------
 
