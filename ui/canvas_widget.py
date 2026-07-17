@@ -1,27 +1,15 @@
-
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QBrush, QColor, QPen
 from PySide6.QtWidgets import (
     QGraphicsRectItem,
     QGraphicsScene,
     QGraphicsView,
-
 )
 
 
 class CanvasWidget(QGraphicsView):
     """
     Widget responsável pela renderização dos algoritmos gráficos.
-
-    Objetivo
-    --------
-    Centralizar toda a lógica relacionada à renderização gráfica da
-    aplicação, incluindo a criação da cena, configuração da área de
-    desenho, conversão de coordenadas e desenho dos elementos.
-
-    Retorno
-    -------
-    Nenhum.
     """
 
     PIXEL_SIZE = 20
@@ -29,18 +17,6 @@ class CanvasWidget(QGraphicsView):
     ALTURA_CENA = 800
 
     def __init__(self, parent=None):
-        """
-        Inicializa o CanvasWidget.
-
-        Parâmetros
-        ----------
-        parent : QWidget | None, opcional
-            Widget pai.
-
-        Retorno
-        -------
-        None
-        """
         super().__init__(parent)
 
         self.criar_cena()
@@ -51,19 +27,6 @@ class CanvasWidget(QGraphicsView):
     # ------------------------------------------------------------------
 
     def criar_cena(self):
-        """
-        Cria e configura a cena gráfica.
-
-        Objetivo
-        --------
-        Inicializar o objeto QGraphicsScene que armazenará todos os
-        elementos desenhados na aplicação.
-
-        Retorno
-        -------
-        None
-        """
-
         self.scene = QGraphicsScene(self)
 
         self.scene.setSceneRect(
@@ -78,58 +41,25 @@ class CanvasWidget(QGraphicsView):
     # ------------------------------------------------------------------
 
     def configurar_view(self):
-        """
-        Configura a área de visualização da cena.
-
-        Objetivo
-        --------
-        Definir as propriedades da QGraphicsView utilizadas pela
-        aplicação.
-
-        Configurações
-        -------------
-        - Cor de fundo;
-        - Centralização da cena;
-        - Remoção das barras de rolagem;
-        - Atualização da viewport;
-        - Desabilitação do arraste da cena;
-        - Configuração da âncora das transformações.
-
-        Retorno
-        -------
-        None
-        """
-
-        # Cor de fundo
         self.setBackgroundBrush(QBrush(Qt.GlobalColor.white))
-
-        # Centraliza a cena
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # Remove barras de rolagem
         self.setHorizontalScrollBarPolicy(
             Qt.ScrollBarPolicy.ScrollBarAlwaysOff
         )
-
         self.setVerticalScrollBarPolicy(
             Qt.ScrollBarPolicy.ScrollBarAlwaysOff
         )
 
-        # Atualização da viewport
         self.setViewportUpdateMode(
             QGraphicsView.ViewportUpdateMode.FullViewportUpdate
         )
 
-        # Desabilita movimentação da cena
         self.setDragMode(QGraphicsView.DragMode.NoDrag)
 
-        # Centraliza transformações futuras
         self.setTransformationAnchor(
             QGraphicsView.ViewportAnchor.AnchorViewCenter
         )
-
-        # Mantém aspecto de pixels
-        #self.setRenderHint(QPainter.RenderHint.Antialiasing, False)
 
     # ------------------------------------------------------------------
 
@@ -161,36 +91,24 @@ class CanvasWidget(QGraphicsView):
 
         self.scene.addItem(pixel_item)
 
-        #------------------------------------------------------------------
-        # Algoritmo de Bresenham
-        def desenhar_linha(
-            self,
-            pontos,
-            cor=Qt.GlobalColor.black,
-        ):
-            """
-            Desenha uma linha a partir da lista de pixels.
-            """
+    # ------------------------------------------------------------------
+    # Antes estava aninhado dentro de desenhar_pixel: por isso nunca
+    # virava um método utilizável (self.desenhar_linha não existia).
+    def desenhar_linha(
+        self,
+        pontos,
+        cor=Qt.GlobalColor.black,
+    ):
+        """
+        Desenha uma linha a partir da lista de pixels.
+        """
 
-            for x, y in pontos:
-                self.desenhar_pixel(x, y, cor)
+        for x, y in pontos:
+            self.desenhar_pixel(x, y, cor)
 
     # ------------------------------------------------------------------
 
     def limpar_canvas(self):
-        """
-        Remove todos os elementos da cena.
-
-        Objetivo
-        --------
-        Limpar completamente o canvas, removendo todos os objetos
-        desenhados.
-
-        Retorno
-        -------
-        None
-        """
-
         self.scene.clear()
         self.desenhar_grade()
         self.desenhar_eixos()
@@ -205,7 +123,7 @@ class CanvasWidget(QGraphicsView):
         largura = self.LARGURA_CENA // 2
         altura = self.ALTURA_CENA // 2
 
-        passo = self.PIXEL_SIZE * 2      # grade duas vezes maior
+        passo = self.PIXEL_SIZE * 2
 
         for x in range(-largura, largura + 1, passo):
             linha = self.scene.addLine(x, -altura, x, altura, pen)
@@ -218,63 +136,32 @@ class CanvasWidget(QGraphicsView):
     # ------------------------------------------------------------------
 
     def desenhar_eixos(self):
-        """
-        Desenha os eixos X e Y.
-        """
-
         pen = QPen(Qt.GlobalColor.black)
         pen.setWidth(2)
 
         largura = self.LARGURA_CENA // 2
         altura = self.ALTURA_CENA // 2
 
-        eixo_x = self.scene.addLine(
-            -largura,
-            0,
-            largura,
-            0,
-            pen,
-        )
+        eixo_x = self.scene.addLine(-largura, 0, largura, 0, pen)
         eixo_x.setZValue(0)
 
-        eixo_y = self.scene.addLine(
-            0,
-            -altura,
-            0,
-            altura,
-            pen,
-        )
+        eixo_y = self.scene.addLine(0, -altura, 0, altura, pen)
         eixo_y.setZValue(0)
 
+    # ------------------------------------------------------------------
 
-    #------------------------------------------------------------------
-    # Mundo Tela -> Tela Mundo -> Validar Coordenadas Negativas
     def mundo_para_tela(self, x: int, y: int):
-        
-        """
-        Converte coordenadas cartesianas para coordenadas da tela.
-        """
-
         return (
             x * self.PIXEL_SIZE,
             -(y + 1) * self.PIXEL_SIZE,
         )
-    
-    def tela_para_mundo(self, x_tela: int, y_tela: int):
-        """
-        Converte coordenadas da tela para coordenadas cartesianas.
-        """
 
+    def tela_para_mundo(self, x_tela: int, y_tela: int):
         x = round(x_tela / self.PIXEL_SIZE)
         y = -(round(y_tela / self.PIXEL_SIZE) + 1)
-
         return x, y
-    
-    def coordenada_valida(self, x: int, y: int):
-        """
-        Verifica se uma coordenada pertence aos limites da cena.
-        """
 
+    def coordenada_valida(self, x: int, y: int):
         limite_x = self.LARGURA_CENA // (2 * self.PIXEL_SIZE)
         limite_y = self.ALTURA_CENA // (2 * self.PIXEL_SIZE)
 
@@ -283,5 +170,3 @@ class CanvasWidget(QGraphicsView):
             and
             -limite_y <= y < limite_y
         )
-    
-    #------------------------------------------------------------------
