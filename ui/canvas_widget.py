@@ -15,8 +15,8 @@ Especificidades:
     - Limpar o conteúdo do canvas.
 
 Retorno:
-    A classe CanvasWidget herda de QGraphicsView e disponibiliza os
-    métodos necessários para gerenciar a renderização gráfica da aplicação.
+- A classe CanvasWidget deve herdar de QGraphicsView e implementar os métodos necessários para criar,
+configurar e gerenciar a cena gráfica, bem como desenhar pixels e limpar o canvas.
 """
 
 from PySide6.QtCore import Qt
@@ -43,7 +43,7 @@ class CanvasWidget(QGraphicsView):
     Nenhum.
     """
 
-    PIXEL_SIZE = 10
+    PIXEL_SIZE = 20
     LARGURA_CENA = 1200
     ALTURA_CENA = 800
 
@@ -64,6 +64,8 @@ class CanvasWidget(QGraphicsView):
 
         self.criar_cena()
         self.configurar_view()
+        self.desenhar_grade()
+        self.desenhar_eixos()
 
     # ------------------------------------------------------------------
 
@@ -145,80 +147,8 @@ class CanvasWidget(QGraphicsView):
             QGraphicsView.ViewportAnchor.AnchorViewCenter
         )
 
-        self.centerOn(0,0)
-
-    # ------------------------------------------------------------------
-
-    def mundo_para_tela(self, x: int, y: int) -> tuple[int, int]:
-        """
-        Converte coordenadas do sistema cartesiano para a tela.
-
-        Objetivo
-        --------
-        Converter coordenadas do sistema de coordenadas do mundo para
-        coordenadas utilizadas pela QGraphicsScene.
-
-        Parâmetros
-        ----------
-        x : int
-            Coordenada X no sistema cartesiano.
-
-        y : int
-            Coordenada Y no sistema cartesiano.
-
-        Observação
-        ----------
-        O eixo Y da tela possui orientação inversa ao eixo Y do sistema
-        cartesiano. Por esse motivo o valor é invertido durante a
-        conversão.
-
-        Retorno
-        -------
-        tuple[int, int]
-            Coordenadas convertidas para a tela.
-        """
-
-        x_tela = x * self.PIXEL_SIZE
-        y_tela = -y * self.PIXEL_SIZE
-
-        return x_tela, y_tela
-
-    # ------------------------------------------------------------------
-
-    def tela_para_mundo(self, x: int, y: int) -> tuple[int, int]:
-        """
-        Converte coordenadas da tela para o sistema cartesiano.
-
-        Objetivo
-        --------
-        Converter coordenadas provenientes da QGraphicsView para o
-        sistema de coordenadas do mundo.
-
-        Parâmetros
-        ----------
-        x : int
-            Coordenada X da tela.
-
-        y : int
-            Coordenada Y da tela.
-
-        Observação
-        ----------
-        Utiliza a função round() para garantir que o retorno seja um
-        ponto pertencente à malha cartesiana.
-
-        Retorno
-        -------
-        tuple[int, int]
-            Coordenadas convertidas para o sistema cartesiano.
-        """
-
-        x_mundo = round(x / self.PIXEL_SIZE)
-        y_mundo = round(-y / self.PIXEL_SIZE)
-
-        return x_mundo, y_mundo
-    
-
+        # Mantém aspecto de pixels
+        self.setRenderHint(QPainter.RenderHint.Antialiasing, False)
 
     # ------------------------------------------------------------------
 
@@ -255,14 +185,17 @@ class CanvasWidget(QGraphicsView):
         x_tela, y_tela = self.mundo_para_tela(x, y)
 
         pixel_item = QGraphicsRectItem(
-            x_tela,
-            y_tela,
+            x * self.PIXEL_SIZE,
+            -((y + 1) * self.PIXEL_SIZE),
             self.PIXEL_SIZE,
             self.PIXEL_SIZE,
         )
 
         pixel_item.setBrush(QBrush(QColor(cor)))
         pixel_item.setPen(QPen(Qt.PenStyle.NoPen))
+
+        # Pixels acima da grade
+        pixel_item.setZValue(1)
 
         self.scene.addItem(pixel_item)
 
@@ -297,20 +230,56 @@ class CanvasWidget(QGraphicsView):
         """
 
         self.scene.clear()
+        self.desenhar_grade()
+        self.desenhar_eixos()
         self.centerOn(0, 0)
 
-        ##############
+    # ------------------------------------------------------------------
 
+    def desenhar_grade(self):
+        pen = QPen(QColor(220, 220, 220))
+        pen.setWidth(1)
 
+        largura = self.LARGURA_CENA // 2
+        altura = self.ALTURA_CENA // 2
 
+        passo = self.PIXEL_SIZE * 2      # grade duas vezes maior
+
+        for x in range(-largura, largura + 1, passo):
+            linha = self.scene.addLine(x, -altura, x, altura, pen)
+            linha.setZValue(-1)
+
+        for y in range(-altura, altura + 1, passo):
+            linha = self.scene.addLine(-largura, y, largura, y, pen)
+            linha.setZValue(-1)
 
     # ------------------------------------------------------------------
-    # Métodos previstos para as próximas etapas do projeto:
-    #
-    # - desenhar_grade()
-    # - desenhar_eixos()
-    # - mousePressEvent()
-    # - wheelEvent()
-    #
-    # Esses métodos serão implementados nas próximas Issues.
-    # ------------------------------------------------------------------
+
+    def desenhar_eixos(self):
+        """
+        Desenha os eixos X e Y.
+        """
+
+        pen = QPen(Qt.GlobalColor.black)
+        pen.setWidth(2)
+
+        largura = self.LARGURA_CENA // 2
+        altura = self.ALTURA_CENA // 2
+
+        eixo_x = self.scene.addLine(
+            -largura,
+            0,
+            largura,
+            0,
+            pen,
+        )
+        eixo_x.setZValue(0)
+
+        eixo_y = self.scene.addLine(
+            0,
+            -altura,
+            0,
+            altura,
+            pen,
+        )
+        eixo_y.setZValue(0)
