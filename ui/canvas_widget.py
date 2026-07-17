@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (
     QGraphicsRectItem,
     QGraphicsScene,
     QGraphicsView,
+
 )
 
 
@@ -148,7 +149,7 @@ class CanvasWidget(QGraphicsView):
         )
 
         # Mantém aspecto de pixels
-        self.setRenderHint(QPainter.RenderHint.Antialiasing, False)
+        #self.setRenderHint(QPainter.RenderHint.Antialiasing, False)
 
     # ------------------------------------------------------------------
 

@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QHBoxLayout,
     QWidget,
+    QLabel,
 )
 
 from ui.canvas_widget import CanvasWidget
@@ -37,7 +38,7 @@ class MainWindow(QMainWindow):
         self.criar_componentes()
         self.criar_layout()
 
-        self.conectar_sinais()
+        #self.conectar_sinais()
 
 
     # -----------------------------------------------------
