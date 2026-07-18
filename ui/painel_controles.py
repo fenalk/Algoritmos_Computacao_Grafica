@@ -51,11 +51,28 @@ class PainelControles(QWidget):
         self.combo_algoritmos = QComboBox()
         self.combo_algoritmos.addItems(self.ALGORITMOS)
 
+        self.combo_grau_bezier = QComboBox()
+        self.combo_grau_bezier.addItems(
+            ["Quadrática (grau 2)", "Cúbica (grau 3)"]
+        )
+
         self.campo_x1 = QLineEdit()
         self.campo_x1.setPlaceholderText("Digite X1")
 
         self.campo_y1 = QLineEdit()
         self.campo_y1.setPlaceholderText("Digite Y1")
+
+        self.campo_ctrl1_x = QLineEdit()
+        self.campo_ctrl1_x.setPlaceholderText("Controle 1 X")
+
+        self.campo_ctrl1_y = QLineEdit()
+        self.campo_ctrl1_y.setPlaceholderText("Controle 1 Y")
+
+        self.campo_ctrl2_x = QLineEdit()
+        self.campo_ctrl2_x.setPlaceholderText("Controle 2 X")
+
+        self.campo_ctrl2_y = QLineEdit()
+        self.campo_ctrl2_y.setPlaceholderText("Controle 2 Y")
 
         self.campo_x2 = QLineEdit()
         self.campo_x2.setPlaceholderText("Digite X2")
@@ -81,8 +98,13 @@ class PainelControles(QWidget):
         self.grupo_algoritmo.setLayout(layout_algoritmo)
 
         self.layout_parametros = QFormLayout()
+        self.layout_parametros.addRow("Grau:", self.combo_grau_bezier)
         self.layout_parametros.addRow("X1:", self.campo_x1)
         self.layout_parametros.addRow("Y1:", self.campo_y1)
+        self.layout_parametros.addRow("Ctrl1 X:", self.campo_ctrl1_x)
+        self.layout_parametros.addRow("Ctrl1 Y:", self.campo_ctrl1_y)
+        self.layout_parametros.addRow("Ctrl2 X:", self.campo_ctrl2_x)
+        self.layout_parametros.addRow("Ctrl2 Y:", self.campo_ctrl2_y)
         self.layout_parametros.addRow("X2:", self.campo_x2)
         self.layout_parametros.addRow("Y2:", self.campo_y2)
         self.grupo_parametros.setLayout(self.layout_parametros)
@@ -104,17 +126,26 @@ class PainelControles(QWidget):
         self.combo_algoritmos.currentTextChanged.connect(
             self.atualizar_parametros
         )
+        self.combo_grau_bezier.currentTextChanged.connect(
+            lambda _: self.atualizar_parametros(self.algoritmo_selecionado())
+        )
 
     # ------------------------------------------------------------------
 
     def atualizar_parametros(self, algoritmo):
+        # Por padrão, esconde tudo que é específico de Bézier
+        self.layout_parametros.setRowVisible(self.combo_grau_bezier, False)
+        self.layout_parametros.setRowVisible(self.campo_ctrl1_x, False)
+        self.layout_parametros.setRowVisible(self.campo_ctrl1_y, False)
+        self.layout_parametros.setRowVisible(self.campo_ctrl2_x, False)
+        self.layout_parametros.setRowVisible(self.campo_ctrl2_y, False)
+        self.layout_parametros.setRowVisible(self.campo_y2, True)
+
         if algoritmo == "Bresenham":
             self.campo_x1.setPlaceholderText("Digite X1")
             self.campo_y1.setPlaceholderText("Digite Y1")
             self.campo_x2.setPlaceholderText("Digite X2")
             self.campo_y2.setPlaceholderText("Digite Y2")
-
-            self.layout_parametros.setRowVisible(self.campo_y2, True)
 
         elif algoritmo == "Círculo":
             self.campo_x1.setPlaceholderText("Centro X")
@@ -123,13 +154,26 @@ class PainelControles(QWidget):
 
             self.layout_parametros.setRowVisible(self.campo_y2, False)
 
-        elif algoritmo == "Elipse":
-            self.campo_x1.setPlaceholderText("Centro X")
-            self.campo_y1.setPlaceholderText("Centro Y")
-            self.campo_x2.setPlaceholderText("Raio X (rx)")
-            self.campo_y2.setPlaceholderText("Raio Y (ry)")
+        elif algoritmo == "Curva de Bézier":
+            self.campo_x1.setPlaceholderText("Inicial X")
+            self.campo_y1.setPlaceholderText("Inicial Y")
+            self.campo_x2.setPlaceholderText("Final X")
+            self.campo_y2.setPlaceholderText("Final Y")
 
-            self.layout_parametros.setRowVisible(self.campo_y2, True)
+            self.layout_parametros.setRowVisible(self.combo_grau_bezier, True)
+            self.layout_parametros.setRowVisible(self.campo_ctrl1_x, True)
+            self.layout_parametros.setRowVisible(self.campo_ctrl1_y, True)
+
+            # Ponto de controle 2 só existe na curva cúbica (grau 3)
+            grau_cubico = self.combo_grau_bezier.currentText().startswith(
+                "Cúbica"
+            )
+            self.layout_parametros.setRowVisible(
+                self.campo_ctrl2_x, grau_cubico
+            )
+            self.layout_parametros.setRowVisible(
+                self.campo_ctrl2_y, grau_cubico
+            )
 
     # ------------------------------------------------------------------
     # Novo: expõe os valores digitados para quem conectar os botões
@@ -144,9 +188,8 @@ class PainelControles(QWidget):
         tuple | None
             - Bresenham: (x1, y1, x2, y2)
             - Círculo:   (xc, yc, raio)
-            - Elipse:    (xc, yc, rx, ry)
-            ou None caso algum campo esteja vazio, inválido, ou
-            (círculo/elipse) algum raio não seja positivo.
+            - Bézier:    lista de pontos [P0, P1, ..., Pn]
+            ou None caso algum campo esteja vazio/inválido.
         """
 
         algoritmo = self.algoritmo_selecionado()
@@ -162,16 +205,26 @@ class PainelControles(QWidget):
 
                 return xc, yc, raio
 
-            if algoritmo == "Elipse":
-                xc = int(self.campo_x1.text())
-                yc = int(self.campo_y1.text())
-                rx = int(self.campo_x2.text())
-                ry = int(self.campo_y2.text())
+            if algoritmo == "Curva de Bézier":
+                p0 = (int(self.campo_x1.text()), int(self.campo_y1.text()))
+                p_final = (int(self.campo_x2.text()), int(self.campo_y2.text()))
+                ctrl1 = (
+                    int(self.campo_ctrl1_x.text()),
+                    int(self.campo_ctrl1_y.text()),
+                )
 
-                if rx <= 0 or ry <= 0:
-                    return None
+                grau_cubico = self.combo_grau_bezier.currentText().startswith(
+                    "Cúbica"
+                )
 
-                return xc, yc, rx, ry
+                if grau_cubico:
+                    ctrl2 = (
+                        int(self.campo_ctrl2_x.text()),
+                        int(self.campo_ctrl2_y.text()),
+                    )
+                    return [p0, ctrl1, ctrl2, p_final]
+
+                return [p0, ctrl1, p_final]
 
             x1 = int(self.campo_x1.text())
             y1 = int(self.campo_y1.text())

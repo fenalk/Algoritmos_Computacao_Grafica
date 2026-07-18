@@ -9,9 +9,9 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from algoritmos.curvas_de_bezier import Bezier
 from algoritmos.bresenham import Bresenham
 from algoritmos.circulo import Circulo
-from algoritmos.elipse import Elipse
 from ui.canvas_widget import CanvasWidget
 from ui.painel_controles import PainelControles
 
@@ -90,9 +90,7 @@ class MainWindow(QMainWindow):
 
         if parametros is None:
             self.statusBar().showMessage(
-                "Preencha os parâmetros corretamente (valores "
-                "inteiros e, no caso de círculo/elipse, raios "
-                "positivos)."
+                "Preencha os parâmetros corretamente."
             )
             return
 
@@ -114,13 +112,24 @@ class MainWindow(QMainWindow):
                 f"desenhado com {len(pontos)} pixels."
             )
 
-        elif algoritmo == "Elipse":
-            xc, yc, rx, ry = parametros
-            pontos = Elipse.calcular_elipse(xc, yc, rx, ry)
-            self.canvas.desenhar_linha(pontos)
+        elif algoritmo == "Curva de Bézier":
+            pontos_controle = parametros
+
+            if len(pontos_controle) == 3:
+                p0, p1, p2 = pontos_controle
+                curva = Bezier.calcular_curva_quadratica(p0, p1, p2)
+                grau_texto = "quadrática (grau 2)"
+            else:
+                p0, p1, p2, p3 = pontos_controle
+                curva = Bezier.calcular_curva_cubica(p0, p1, p2, p3)
+                grau_texto = "cúbica (grau 3)"
+
+            pixels = Bezier.rasterizar(curva)
+            self.canvas.desenhar_linha(pixels)
+
             self.statusBar().showMessage(
-                f"Elipse de centro ({xc}, {yc}), rx={rx} e ry={ry} "
-                f"desenhada com {len(pontos)} pixels."
+                f"Curva de Bézier {grau_texto} desenhada "
+                f"com {len(pixels)} pixels."
             )
 
         else:
