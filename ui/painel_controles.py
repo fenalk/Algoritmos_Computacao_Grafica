@@ -114,23 +114,45 @@ class PainelControles(QWidget):
             self.campo_x2.setPlaceholderText("Digite X2")
             self.campo_y2.setPlaceholderText("Digite Y2")
 
+            self.layout_parametros.setRowVisible(self.campo_y2, True)
+
+        elif algoritmo == "Círculo":
+            self.campo_x1.setPlaceholderText("Centro X")
+            self.campo_y1.setPlaceholderText("Centro Y")
+            self.campo_x2.setPlaceholderText("Raio")
+
+            self.layout_parametros.setRowVisible(self.campo_y2, False)
+
     # ------------------------------------------------------------------
     # Novo: expõe os valores digitados para quem conectar os botões
     # (a MainWindow), mantendo o painel sem conhecer os algoritmos.
 
     def obter_parametros(self):
         """
-        Lê e valida os campos X1, Y1, X2, Y2 como inteiros.
+        Lê e valida os campos de acordo com o algoritmo selecionado.
 
         Retorno
         -------
-        tuple[int, int, int, int] | None
-            (x1, y1, x2, y2) se todos os campos forem inteiros
-            válidos, ou None caso algum campo esteja vazio ou
-            inválido.
+        tuple | None
+            - Bresenham: (x1, y1, x2, y2)
+            - Círculo:   (xc, yc, raio)
+            ou None caso algum campo esteja vazio, inválido, ou
+            (no caso do círculo) o raio não seja positivo.
         """
 
+        algoritmo = self.algoritmo_selecionado()
+
         try:
+            if algoritmo == "Círculo":
+                xc = int(self.campo_x1.text())
+                yc = int(self.campo_y1.text())
+                raio = int(self.campo_x2.text())
+
+                if raio <= 0:
+                    return None
+
+                return xc, yc, raio
+
             x1 = int(self.campo_x1.text())
             y1 = int(self.campo_y1.text())
             x2 = int(self.campo_x2.text())

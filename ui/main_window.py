@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
 )
 
 from algoritmos.bresenham import Bresenham
+from algoritmos.circulo import Circulo
 from ui.canvas_widget import CanvasWidget
 from ui.painel_controles import PainelControles
 
@@ -88,19 +89,29 @@ class MainWindow(QMainWindow):
 
         if parametros is None:
             self.statusBar().showMessage(
-                "Preencha X1, Y1, X2 e Y2 com números inteiros."
+                "Preencha os parâmetros corretamente (valores "
+                "inteiros e, no caso do círculo, raio positivo)."
             )
             return
 
-        x1, y1, x2, y2 = parametros
-
         if algoritmo == "Bresenham":
+            x1, y1, x2, y2 = parametros
             pontos = Bresenham.calcular_reta(x1, y1, x2, y2)
             self.canvas.desenhar_linha(pontos)
             self.statusBar().showMessage(
                 f"Reta de ({x1}, {y1}) a ({x2}, {y2}) desenhada "
                 f"com {len(pontos)} pixels."
             )
+
+        elif algoritmo == "Círculo":
+            xc, yc, raio = parametros
+            pontos = Circulo.calcular_circulo(xc, yc, raio)
+            self.canvas.desenhar_linha(pontos)
+            self.statusBar().showMessage(
+                f"Círculo de centro ({xc}, {yc}) e raio {raio} "
+                f"desenhado com {len(pontos)} pixels."
+            )
+
         else:
             self.statusBar().showMessage(
                 f"Algoritmo '{algoritmo}' ainda não implementado."
