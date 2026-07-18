@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
 
 from algoritmos.bresenham import Bresenham
 from algoritmos.circulo import Circulo
+from algoritmos.elipse import Elipse
 from ui.canvas_widget import CanvasWidget
 from ui.painel_controles import PainelControles
 
@@ -90,7 +91,8 @@ class MainWindow(QMainWindow):
         if parametros is None:
             self.statusBar().showMessage(
                 "Preencha os parâmetros corretamente (valores "
-                "inteiros e, no caso do círculo, raio positivo)."
+                "inteiros e, no caso de círculo/elipse, raios "
+                "positivos)."
             )
             return
 
@@ -110,6 +112,15 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(
                 f"Círculo de centro ({xc}, {yc}) e raio {raio} "
                 f"desenhado com {len(pontos)} pixels."
+            )
+
+        elif algoritmo == "Elipse":
+            xc, yc, rx, ry = parametros
+            pontos = Elipse.calcular_elipse(xc, yc, rx, ry)
+            self.canvas.desenhar_linha(pontos)
+            self.statusBar().showMessage(
+                f"Elipse de centro ({xc}, {yc}), rx={rx} e ry={ry} "
+                f"desenhada com {len(pontos)} pixels."
             )
 
         else:
