@@ -3,11 +3,13 @@ Módulo responsável pelo painel lateral de controles da aplicação.
 """
 
 from PySide6.QtWidgets import (
+    QCheckBox,
     QComboBox,
     QFormLayout,
     QGroupBox,
     QHBoxLayout,
     QLineEdit,
+    QListWidget,
     QPushButton,
     QVBoxLayout,
     QWidget,
@@ -86,6 +88,26 @@ class PainelControles(QWidget):
         self.botao_desenhar.setMinimumHeight(35)
         self.botao_limpar.setMinimumHeight(35)
 
+        # --- Polilinha: entrada de N > 3 pontos quaisquer ---
+
+        self.grupo_pontos_polilinha = QGroupBox("Pontos da Polilinha (N > 3)")
+
+        self.campo_ponto_x = QLineEdit()
+        self.campo_ponto_x.setPlaceholderText("X")
+
+        self.campo_ponto_y = QLineEdit()
+        self.campo_ponto_y.setPlaceholderText("Y")
+
+        self.botao_adicionar_ponto = QPushButton("Adicionar")
+        self.botao_remover_ponto = QPushButton("Remover selecionado")
+
+        self.lista_pontos_polilinha = QListWidget()
+        self.lista_pontos_polilinha.setMinimumHeight(120)
+
+        self.checkbox_fechar_poligono = QCheckBox(
+            "Fechar (ligar último ao primeiro)"
+        )
+
     # ------------------------------------------------------------------
 
     def criar_layout(self):
@@ -109,12 +131,33 @@ class PainelControles(QWidget):
         self.layout_parametros.addRow("Y2:", self.campo_y2)
         self.grupo_parametros.setLayout(self.layout_parametros)
 
+        # --- Grupo de pontos da Polilinha ---
+
+        layout_pontos = QVBoxLayout()
+
+        layout_campo_ponto = QHBoxLayout()
+        layout_campo_ponto.addWidget(self.campo_ponto_x)
+        layout_campo_ponto.addWidget(self.campo_ponto_y)
+        layout_campo_ponto.addWidget(self.botao_adicionar_ponto)
+
+        layout_pontos.addLayout(layout_campo_ponto)
+        layout_pontos.addWidget(self.lista_pontos_polilinha)
+        layout_pontos.addWidget(self.botao_remover_ponto)
+        layout_pontos.addWidget(self.checkbox_fechar_poligono)
+
+        self.grupo_pontos_polilinha.setLayout(layout_pontos)
+
+        # --- Botões ---
+
         layout_botoes = QHBoxLayout()
         layout_botoes.addWidget(self.botao_desenhar)
         layout_botoes.addWidget(self.botao_limpar)
 
+        # --- Montagem final (cada grupo adicionado uma única vez) ---
+
         layout_principal.addWidget(self.grupo_algoritmo)
         layout_principal.addWidget(self.grupo_parametros)
+        layout_principal.addWidget(self.grupo_pontos_polilinha)
         layout_principal.addStretch()
         layout_principal.addLayout(layout_botoes)
 
@@ -130,9 +173,23 @@ class PainelControles(QWidget):
             lambda _: self.atualizar_parametros(self.algoritmo_selecionado())
         )
 
+        self.botao_adicionar_ponto.clicked.connect(
+            self.adicionar_ponto_polilinha
+        )
+        self.botao_remover_ponto.clicked.connect(
+            self.remover_ponto_polilinha
+        )
+
     # ------------------------------------------------------------------
 
     def atualizar_parametros(self, algoritmo):
+        eh_polilinha = algoritmo == "Polilinha"
+
+        # Alterna entre o grupo de parâmetros fixos (Bresenham,
+        # Círculo, Bézier) e o grupo de pontos dinâmicos (Polilinha)
+        self.grupo_parametros.setVisible(not eh_polilinha)
+        self.grupo_pontos_polilinha.setVisible(eh_polilinha)
+
         # Por padrão, esconde tudo que é específico de Bézier
         self.layout_parametros.setRowVisible(self.combo_grau_bezier, False)
         self.layout_parametros.setRowVisible(self.campo_ctrl1_x, False)
@@ -153,6 +210,12 @@ class PainelControles(QWidget):
             self.campo_x2.setPlaceholderText("Raio")
 
             self.layout_parametros.setRowVisible(self.campo_y2, False)
+        
+        elif algoritmo == "Elipse":
+            self.campo_x1.setPlaceholderText("Centro X")
+            self.campo_y1.setPlaceholderText("Centro Y")
+            self.campo_x2.setPlaceholderText("Rx (semieixo horizontal)")
+            self.campo_y2.setPlaceholderText("Ry (semieixo vertical)")
 
         elif algoritmo == "Curva de Bézier":
             self.campo_x1.setPlaceholderText("Inicial X")
@@ -175,8 +238,11 @@ class PainelControles(QWidget):
                 self.campo_ctrl2_y, grau_cubico
             )
 
+        # "Polilinha" não usa nenhum campo do grupo_parametros: toda a
+        # entrada acontece em grupo_pontos_polilinha (já tratado acima).
+
     # ------------------------------------------------------------------
-    # Novo: expõe os valores digitados para quem conectar os botões
+    # Expõe os valores digitados para quem conectar os botões
     # (a MainWindow), mantendo o painel sem conhecer os algoritmos.
 
     def obter_parametros(self):
@@ -185,14 +251,24 @@ class PainelControles(QWidget):
 
         Retorno
         -------
-        tuple | None
+        tuple | list | None
             - Bresenham: (x1, y1, x2, y2)
             - Círculo:   (xc, yc, raio)
             - Bézier:    lista de pontos [P0, P1, ..., Pn]
+            - Polilinha: lista de pontos [(x0,y0), ..., (xn,yn)]
+              com N > 3
             ou None caso algum campo esteja vazio/inválido.
         """
 
         algoritmo = self.algoritmo_selecionado()
+
+        if algoritmo == "Polilinha":
+            pontos = self.obter_pontos_polilinha()
+
+            if len(pontos) <= 3:
+                return None
+
+            return pontos
 
         try:
             if algoritmo == "Círculo":
@@ -204,6 +280,17 @@ class PainelControles(QWidget):
                     return None
 
                 return xc, yc, raio
+        
+            if algoritmo == "Elipse":
+                xc = int(self.campo_x1.text())
+                yc = int(self.campo_y1.text())
+                rx = int(self.campo_x2.text())
+                ry = int(self.campo_y2.text())
+
+                if rx <= 0 or ry <= 0:
+                    return None
+
+                return xc, yc, rx, ry
 
             if algoritmo == "Curva de Bézier":
                 p0 = (int(self.campo_x1.text()), int(self.campo_y1.text()))
@@ -237,3 +324,54 @@ class PainelControles(QWidget):
 
     def algoritmo_selecionado(self):
         return self.combo_algoritmos.currentText()
+
+    # ------------------------------------------------------------------
+    # Polilinha: adicionar/remover/ler pontos digitados pelo usuário
+    # ------------------------------------------------------------------
+
+    def adicionar_ponto_polilinha(self):
+        """
+        Lê X e Y digitados e adiciona o ponto à lista da polilinha.
+        Ignora silenciosamente entradas inválidas (não numéricas).
+        """
+
+        try:
+            x = int(self.campo_ponto_x.text())
+            y = int(self.campo_ponto_y.text())
+        except ValueError:
+            return
+
+        self.lista_pontos_polilinha.addItem(f"({x}, {y})")
+
+        self.campo_ponto_x.clear()
+        self.campo_ponto_y.clear()
+        self.campo_ponto_x.setFocus()
+
+    def remover_ponto_polilinha(self):
+        """
+        Remove o ponto atualmente selecionado na lista, se houver.
+        """
+
+        linha_selecionada = self.lista_pontos_polilinha.currentRow()
+
+        if linha_selecionada >= 0:
+            self.lista_pontos_polilinha.takeItem(linha_selecionada)
+
+    def obter_pontos_polilinha(self):
+        """
+        Converte os itens da lista (texto "(x, y)") de volta para
+        uma lista de tuplas inteiras.
+        """
+
+        pontos = []
+
+        for i in range(self.lista_pontos_polilinha.count()):
+            texto = self.lista_pontos_polilinha.item(i).text()
+            texto = texto.strip("()")
+            x_str, y_str = texto.split(",")
+            pontos.append((int(x_str.strip()), int(y_str.strip())))
+
+        return pontos
+
+    def polilinha_fechada(self):
+        return self.checkbox_fechar_poligono.isChecked()

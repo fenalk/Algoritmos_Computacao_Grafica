@@ -9,9 +9,11 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from algoritmos.curvas_de_bezier import Bezier
 from algoritmos.bresenham import Bresenham
 from algoritmos.circulo import Circulo
+from algoritmos.elipse import Elipse
+from algoritmos.curvas_de_bezier import Bezier
+from algoritmos.polilinha import Polilinha
 from ui.canvas_widget import CanvasWidget
 from ui.painel_controles import PainelControles
 
@@ -38,10 +40,10 @@ class MainWindow(QMainWindow):
     # -----------------------------------------------------
 
     def criar_componentes(self):
-        self.menuBar().addMenu("Arquivo")
-        self.menuBar().addMenu("Editar")
-        self.menuBar().addMenu("Visualizar")
-        self.menuBar().addMenu("Ajuda")
+        # self.menuBar().addMenu("Arquivo")
+        # self.menuBar().addMenu("Editar")
+        # self.menuBar().addMenu("Visualizar")
+        # self.menuBar().addMenu("Ajuda")
 
         self.statusBar().showMessage("Aplicação iniciada.")
 
@@ -89,9 +91,15 @@ class MainWindow(QMainWindow):
         parametros = self.painel.obter_parametros()
 
         if parametros is None:
-            self.statusBar().showMessage(
-                "Preencha os parâmetros corretamente."
-            )
+            if algoritmo == "Polilinha":
+                self.statusBar().showMessage(
+                    "Adicione pelo menos 4 pontos (N > 3) para "
+                    "desenhar a polilinha."
+                )
+            else:
+                self.statusBar().showMessage(
+                    "Preencha os parâmetros corretamente."
+                )
             return
 
         if algoritmo == "Bresenham":
@@ -103,13 +111,13 @@ class MainWindow(QMainWindow):
                 f"com {len(pontos)} pixels."
             )
 
-        elif algoritmo == "Círculo":
-            xc, yc, raio = parametros
-            pontos = Circulo.calcular_circulo(xc, yc, raio)
+        elif algoritmo == "Elipse":
+            xc, yc, rx, ry = parametros
+            pontos = Elipse.calcular_elipse(xc, yc, rx, ry)
             self.canvas.desenhar_linha(pontos)
             self.statusBar().showMessage(
-                f"Círculo de centro ({xc}, {yc}) e raio {raio} "
-                f"desenhado com {len(pontos)} pixels."
+                f"Elipse de centro ({xc}, {yc}), rx={rx}, ry={ry} "
+                f"desenhada com {len(pontos)} pixels."
             )
 
         elif algoritmo == "Curva de Bézier":
@@ -130,6 +138,19 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(
                 f"Curva de Bézier {grau_texto} desenhada "
                 f"com {len(pixels)} pixels."
+            )
+
+        elif algoritmo == "Polilinha":
+            pontos = parametros
+            fechada = self.painel.polilinha_fechada()
+
+            pixels = Polilinha.calcular_polilinha(pontos, fechada=fechada)
+            self.canvas.desenhar_linha(pixels)
+
+            sufixo = " (fechada)." if fechada else "."
+            self.statusBar().showMessage(
+                f"Polilinha com {len(pontos)} pontos desenhada "
+                f"com {len(pixels)} pixels{sufixo}"
             )
 
         else:

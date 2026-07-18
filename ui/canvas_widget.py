@@ -12,9 +12,9 @@ class CanvasWidget(QGraphicsView):
     Widget responsável pela renderização dos algoritmos gráficos.
     """
 
-    PIXEL_SIZE = 20
-    LARGURA_CENA = 1200
-    ALTURA_CENA = 800
+    PIXEL_SIZE = 30
+    LARGURA_CENA = 690
+    ALTURA_CENA = 690
 
     def __init__(self, parent=None):
         super().__init__(parent)
