@@ -123,6 +123,14 @@ class PainelControles(QWidget):
 
             self.layout_parametros.setRowVisible(self.campo_y2, False)
 
+        elif algoritmo == "Elipse":
+            self.campo_x1.setPlaceholderText("Centro X")
+            self.campo_y1.setPlaceholderText("Centro Y")
+            self.campo_x2.setPlaceholderText("Raio X (rx)")
+            self.campo_y2.setPlaceholderText("Raio Y (ry)")
+
+            self.layout_parametros.setRowVisible(self.campo_y2, True)
+
     # ------------------------------------------------------------------
     # Novo: expõe os valores digitados para quem conectar os botões
     # (a MainWindow), mantendo o painel sem conhecer os algoritmos.
@@ -136,8 +144,9 @@ class PainelControles(QWidget):
         tuple | None
             - Bresenham: (x1, y1, x2, y2)
             - Círculo:   (xc, yc, raio)
+            - Elipse:    (xc, yc, rx, ry)
             ou None caso algum campo esteja vazio, inválido, ou
-            (no caso do círculo) o raio não seja positivo.
+            (círculo/elipse) algum raio não seja positivo.
         """
 
         algoritmo = self.algoritmo_selecionado()
@@ -152,6 +161,17 @@ class PainelControles(QWidget):
                     return None
 
                 return xc, yc, raio
+
+            if algoritmo == "Elipse":
+                xc = int(self.campo_x1.text())
+                yc = int(self.campo_y1.text())
+                rx = int(self.campo_x2.text())
+                ry = int(self.campo_y2.text())
+
+                if rx <= 0 or ry <= 0:
+                    return None
+
+                return xc, yc, rx, ry
 
             x1 = int(self.campo_x1.text())
             y1 = int(self.campo_y1.text())
