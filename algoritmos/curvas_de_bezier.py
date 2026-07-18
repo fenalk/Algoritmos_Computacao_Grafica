@@ -64,6 +64,7 @@ class Bezier:
 
         curva = []
 
+        # laço principal
         for i in range(resolucao + 1):
 
             t = i / resolucao
