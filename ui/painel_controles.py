@@ -28,7 +28,8 @@ class PainelControles(QWidget):
         "Curva de Bézier",
         "Polilinha",
         "Preenchimento",
-        "Recorte",
+        "Recorte de Linhas",
+        "Recorte de Polígonos",
         "Transformações Geométricas",
         "Projeções",
     ]
@@ -115,6 +116,20 @@ class PainelControles(QWidget):
             ["Recursivo (flood fill)", "Varredura (scanline)"]
         )
 
+        # --- Recorte de Linhas: janela de recorte (xmin, ymin, xmax, ymax) ---
+
+        self.campo_clip_xmin = QLineEdit()
+        self.campo_clip_xmin.setPlaceholderText("Xmin da janela")
+
+        self.campo_clip_ymin = QLineEdit()
+        self.campo_clip_ymin.setPlaceholderText("Ymin da janela")
+
+        self.campo_clip_xmax = QLineEdit()
+        self.campo_clip_xmax.setPlaceholderText("Xmax da janela")
+
+        self.campo_clip_ymax = QLineEdit()
+        self.campo_clip_ymax.setPlaceholderText("Ymax da janela")
+
     # ------------------------------------------------------------------
 
     def criar_layout(self):
@@ -137,6 +152,10 @@ class PainelControles(QWidget):
         self.layout_parametros.addRow("Ctrl2 Y:", self.campo_ctrl2_y)
         self.layout_parametros.addRow("X2:", self.campo_x2)
         self.layout_parametros.addRow("Y2:", self.campo_y2)
+        self.layout_parametros.addRow("Xmin:", self.campo_clip_xmin)
+        self.layout_parametros.addRow("Ymin:", self.campo_clip_ymin)
+        self.layout_parametros.addRow("Xmax:", self.campo_clip_xmax)
+        self.layout_parametros.addRow("Ymax:", self.campo_clip_ymax)
         self.grupo_parametros.setLayout(self.layout_parametros)
 
         # --- Grupo de pontos da Polilinha ---
@@ -204,7 +223,11 @@ class PainelControles(QWidget):
         self.layout_parametros.setRowVisible(self.campo_ctrl1_y, False)
         self.layout_parametros.setRowVisible(self.campo_ctrl2_x, False)
         self.layout_parametros.setRowVisible(self.campo_ctrl2_y, False)
-        
+        self.layout_parametros.setRowVisible(self.campo_clip_xmin, False)
+        self.layout_parametros.setRowVisible(self.campo_clip_ymin, False)
+        self.layout_parametros.setRowVisible(self.campo_clip_xmax, False)
+        self.layout_parametros.setRowVisible(self.campo_clip_ymax, False)
+
         # Visibilidade padrão dos campos numéricos comuns
         self.layout_parametros.setRowVisible(self.campo_x1, True)
         self.layout_parametros.setRowVisible(self.campo_y1, True)
@@ -259,14 +282,25 @@ class PainelControles(QWidget):
             eh_recursivo = self.combo_tipo_preenchimento.currentText().startswith("Recursivo")
 
             # Gerencia de forma limpa o comportamento dinâmico do container de parâmetros
-            self.grupo_parametros.setVisible(True) 
+            self.grupo_parametros.setVisible(True)
             self.layout_parametros.setRowVisible(self.campo_x1, eh_recursivo)
             self.layout_parametros.setRowVisible(self.campo_y1, eh_recursivo)
             self.layout_parametros.setRowVisible(self.campo_x2, False)
             self.layout_parametros.setRowVisible(self.campo_y2, False)
-            
+
             self.campo_x1.setPlaceholderText("Semente X")
             self.campo_y1.setPlaceholderText("Semente Y")
+
+        elif algoritmo == "Recorte de Linhas":
+            self.campo_x1.setPlaceholderText("Linha - X1")
+            self.campo_y1.setPlaceholderText("Linha - Y1")
+            self.campo_x2.setPlaceholderText("Linha - X2")
+            self.campo_y2.setPlaceholderText("Linha - Y2")
+
+            self.layout_parametros.setRowVisible(self.campo_clip_xmin, True)
+            self.layout_parametros.setRowVisible(self.campo_clip_ymin, True)
+            self.layout_parametros.setRowVisible(self.campo_clip_xmax, True)
+            self.layout_parametros.setRowVisible(self.campo_clip_ymax, True)
 
     # ------------------------------------------------------------------
 
@@ -284,10 +318,10 @@ class PainelControles(QWidget):
             tipo_texto = self.combo_tipo_preenchimento.currentText()
             tipo = "recursivo" if tipo_texto.startswith("Recursivo") else "varredura"
             vertices = self.obter_pontos_polilinha()
-            
+
             if not vertices or len(vertices) < 3:
                 return None
-                
+
             if tipo == "recursivo":
                 try:
                     sx = int(self.campo_x1.text())
@@ -305,6 +339,28 @@ class PainelControles(QWidget):
                     "pontos": vertices,
                     "semente": None
                 }
+
+        if algoritmo == "Recorte de Linhas":
+            try:
+                x1 = int(self.campo_x1.text())
+                y1 = int(self.campo_y1.text())
+                x2 = int(self.campo_x2.text())
+                y2 = int(self.campo_y2.text())
+
+                xmin = int(self.campo_clip_xmin.text())
+                ymin = int(self.campo_clip_ymin.text())
+                xmax = int(self.campo_clip_xmax.text())
+                ymax = int(self.campo_clip_ymax.text())
+
+                if xmin >= xmax or ymin >= ymax:
+                    return None
+
+                return {
+                    "linha": (x1, y1, x2, y2),
+                    "janela": (xmin, ymin, xmax, ymax),
+                }
+            except ValueError:
+                return None
 
         try:
             if algoritmo == "Círculo":
