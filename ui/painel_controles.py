@@ -143,6 +143,34 @@ class PainelControles(QWidget):
         self.campo_clip_ymax = QLineEdit()
         self.campo_clip_ymax.setPlaceholderText(f"Ymax (< {limite_y})")
 
+        # --- Transformações Geométricas: translação, escala e rotação ---
+
+        self.combo_tipo_transformacao = QComboBox()
+        self.combo_tipo_transformacao.addItems(
+            ["Translação", "Escala", "Rotação"]
+        )
+
+        self.campo_transf_dx = QLineEdit()
+        self.campo_transf_dx.setPlaceholderText("Deslocamento em X (dx)")
+
+        self.campo_transf_dy = QLineEdit()
+        self.campo_transf_dy.setPlaceholderText("Deslocamento em Y (dy)")
+
+        self.campo_transf_sx = QLineEdit()
+        self.campo_transf_sx.setPlaceholderText("Fator de escala em X (Sx)")
+
+        self.campo_transf_sy = QLineEdit()
+        self.campo_transf_sy.setPlaceholderText("Fator de escala em Y (Sy)")
+
+        self.campo_transf_angulo = QLineEdit()
+        self.campo_transf_angulo.setPlaceholderText("Ângulo em graus (anti-horário)")
+
+        self.campo_transf_px = QLineEdit()
+        self.campo_transf_px.setPlaceholderText("X do pivô / ponto fixo")
+
+        self.campo_transf_py = QLineEdit()
+        self.campo_transf_py.setPlaceholderText("Y do pivô / ponto fixo")
+
     # ------------------------------------------------------------------
 
     def criar_layout(self):
@@ -169,6 +197,14 @@ class PainelControles(QWidget):
         self.layout_parametros.addRow("Ymin:", self.campo_clip_ymin)
         self.layout_parametros.addRow("Xmax:", self.campo_clip_xmax)
         self.layout_parametros.addRow("Ymax:", self.campo_clip_ymax)
+        self.layout_parametros.addRow("Transformação:", self.combo_tipo_transformacao)
+        self.layout_parametros.addRow("dx:", self.campo_transf_dx)
+        self.layout_parametros.addRow("dy:", self.campo_transf_dy)
+        self.layout_parametros.addRow("Sx:", self.campo_transf_sx)
+        self.layout_parametros.addRow("Sy:", self.campo_transf_sy)
+        self.layout_parametros.addRow("Ângulo (°):", self.campo_transf_angulo)
+        self.layout_parametros.addRow("Pivô/Fixo X:", self.campo_transf_px)
+        self.layout_parametros.addRow("Pivô/Fixo Y:", self.campo_transf_py)
         self.grupo_parametros.setLayout(self.layout_parametros)
 
         # --- Grupo de pontos da Polilinha ---
@@ -221,6 +257,9 @@ class PainelControles(QWidget):
         self.combo_tipo_preenchimento.currentTextChanged.connect(
             lambda _: self.atualizar_parametros(self.algoritmo_selecionado())
         )
+        self.combo_tipo_transformacao.currentTextChanged.connect(
+            lambda _: self.atualizar_parametros(self.algoritmo_selecionado())
+        )
 
     # ------------------------------------------------------------------
 
@@ -229,6 +268,7 @@ class PainelControles(QWidget):
             "Polilinha",
             "Preenchimento",
             "Recorte de Polígonos",
+            "Transformações Geométricas",
         )
 
         self.grupo_pontos_polilinha.setVisible(eh_pontos_dinamicos)
@@ -244,6 +284,14 @@ class PainelControles(QWidget):
         self.layout_parametros.setRowVisible(self.campo_clip_ymin, False)
         self.layout_parametros.setRowVisible(self.campo_clip_xmax, False)
         self.layout_parametros.setRowVisible(self.campo_clip_ymax, False)
+        self.layout_parametros.setRowVisible(self.combo_tipo_transformacao, False)
+        self.layout_parametros.setRowVisible(self.campo_transf_dx, False)
+        self.layout_parametros.setRowVisible(self.campo_transf_dy, False)
+        self.layout_parametros.setRowVisible(self.campo_transf_sx, False)
+        self.layout_parametros.setRowVisible(self.campo_transf_sy, False)
+        self.layout_parametros.setRowVisible(self.campo_transf_angulo, False)
+        self.layout_parametros.setRowVisible(self.campo_transf_px, False)
+        self.layout_parametros.setRowVisible(self.campo_transf_py, False)
 
         # Visibilidade padrão dos campos numéricos comuns
         self.layout_parametros.setRowVisible(self.campo_x1, True)
@@ -336,6 +384,38 @@ class PainelControles(QWidget):
             self.layout_parametros.setRowVisible(self.campo_clip_xmax, True)
             self.layout_parametros.setRowVisible(self.campo_clip_ymax, True)
 
+        elif algoritmo == "Transformações Geométricas":
+            self.grupo_pontos_polilinha.setTitle("Vértices do Polígono (N ≥ 3)")
+            self.checkbox_fechar_poligono.setVisible(False)
+            self.checkbox_fechar_poligono.setChecked(True)
+
+            # Reaproveita o grupo de parâmetros apenas para os campos
+            # da transformação selecionada
+            self.grupo_parametros.setVisible(True)
+            self.layout_parametros.setRowVisible(self.campo_x1, False)
+            self.layout_parametros.setRowVisible(self.campo_y1, False)
+            self.layout_parametros.setRowVisible(self.campo_x2, False)
+            self.layout_parametros.setRowVisible(self.campo_y2, False)
+
+            self.layout_parametros.setRowVisible(self.combo_tipo_transformacao, True)
+
+            tipo = self.combo_tipo_transformacao.currentText()
+
+            if tipo == "Translação":
+                self.layout_parametros.setRowVisible(self.campo_transf_dx, True)
+                self.layout_parametros.setRowVisible(self.campo_transf_dy, True)
+
+            elif tipo == "Escala":
+                self.layout_parametros.setRowVisible(self.campo_transf_sx, True)
+                self.layout_parametros.setRowVisible(self.campo_transf_sy, True)
+                self.layout_parametros.setRowVisible(self.campo_transf_px, True)
+                self.layout_parametros.setRowVisible(self.campo_transf_py, True)
+
+            elif tipo == "Rotação":
+                self.layout_parametros.setRowVisible(self.campo_transf_angulo, True)
+                self.layout_parametros.setRowVisible(self.campo_transf_px, True)
+                self.layout_parametros.setRowVisible(self.campo_transf_py, True)
+
     # ------------------------------------------------------------------
 
     def obter_parametros(self):
@@ -388,13 +468,65 @@ class PainelControles(QWidget):
             except ValueError:
                 return None
 
-            if xmin >= xmax or ymin >= ymax:
+            if not self.janela_recorte_valida(xmin, ymin, xmax, ymax):
                 return None
 
             return {
                 "pontos": vertices,
                 "janela": (xmin, ymin, xmax, ymax),
             }
+
+        if algoritmo == "Transformações Geométricas":
+            vertices = self.obter_pontos_polilinha()
+
+            if not vertices or len(vertices) < 3:
+                return None
+
+            tipo = self.combo_tipo_transformacao.currentText()
+
+            try:
+                if tipo == "Translação":
+                    dx = float(self.campo_transf_dx.text())
+                    dy = float(self.campo_transf_dy.text())
+                    return {
+                        "tipo": "translacao",
+                        "pontos": vertices,
+                        "dx": dx,
+                        "dy": dy,
+                    }
+
+                if tipo == "Escala":
+                    sx = float(self.campo_transf_sx.text())
+                    sy = float(self.campo_transf_sy.text())
+                    px = float(self.campo_transf_px.text())
+                    py = float(self.campo_transf_py.text())
+
+                    if sx == 0 or sy == 0:
+                        return None
+
+                    return {
+                        "tipo": "escala",
+                        "pontos": vertices,
+                        "sx": sx,
+                        "sy": sy,
+                        "ponto_fixo": (px, py),
+                    }
+
+                if tipo == "Rotação":
+                    angulo = float(self.campo_transf_angulo.text())
+                    px = float(self.campo_transf_px.text())
+                    py = float(self.campo_transf_py.text())
+
+                    return {
+                        "tipo": "rotacao",
+                        "pontos": vertices,
+                        "angulo": angulo,
+                        "pivo": (px, py),
+                    }
+            except ValueError:
+                return None
+
+            return None
 
         if algoritmo == "Recorte de Linhas":
             try:
@@ -454,6 +586,37 @@ class PainelControles(QWidget):
 
     def algoritmo_selecionado(self):
         return self.combo_algoritmos.currentText()
+
+    # ------------------------------------------------------------------
+
+    def janela_recorte_valida(self, xmin, ymin, xmax, ymax):
+        """
+        Verifica se a janela de recorte é geometricamente válida
+        (xmin < xmax e ymin < ymax) e se está contida na área de
+        desenho, sendo estritamente MENOR que ela em pelo menos uma
+        das dimensões (conforme exigido pelo enunciado: a janela de
+        recorte deve ser menor que a área de desenho).
+        """
+
+        if xmin >= xmax or ymin >= ymax:
+            return False
+
+        limite_x = self.LIMITE_CANVAS_X
+        limite_y = self.LIMITE_CANVAS_Y
+
+        dentro_da_area = (
+            -limite_x <= xmin
+            and xmax <= limite_x
+            and -limite_y <= ymin
+            and ymax <= limite_y
+        )
+
+        menor_que_area = (
+            (xmax - xmin) < 2 * limite_x
+            or (ymax - ymin) < 2 * limite_y
+        )
+
+        return dentro_da_area and menor_que_area
 
     # ------------------------------------------------------------------
 
