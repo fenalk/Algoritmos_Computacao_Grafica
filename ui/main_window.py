@@ -16,6 +16,7 @@ from algoritmos.elipse import Elipse
 from algoritmos.polilinha import Polilinha
 from algoritmos.preenchimento import Preenchimento
 from algoritmos.recorte_linhas import RecorteLinhas
+from algoritmos.recorte_poligono import RecortePoligonos
 from ui.canvas_widget import CanvasWidget
 from ui.painel_controles import PainelControles
 
@@ -101,6 +102,11 @@ class MainWindow(QMainWindow):
             elif algoritmo == "Recorte de Linhas":
                 self.statusBar().showMessage(
                     "Informe a linha e uma janela de recorte válida (Xmin < Xmax e Ymin < Ymax)."
+                )
+            elif algoritmo == "Recorte de Polígonos":
+                self.statusBar().showMessage(
+                    "Informe pelo menos 3 vértices e uma janela de recorte válida "
+                    "(Xmin < Xmax e Ymin < Ymax)."
                 )
             else:
                 self.statusBar().showMessage(
@@ -305,14 +311,10 @@ class MainWindow(QMainWindow):
             x1, y1, x2, y2 = parametros["linha"]
             xmin, ymin, xmax, ymax = parametros["janela"]
 
-            # Desenha a janela de recorte (retângulo) em azul
-            pontos_janela = []
-            pontos_janela += Bresenham.calcular_reta(xmin, ymin, xmax, ymin)
-            pontos_janela += Bresenham.calcular_reta(xmax, ymin, xmax, ymax)
-            pontos_janela += Bresenham.calcular_reta(xmax, ymax, xmin, ymax)
-            pontos_janela += Bresenham.calcular_reta(xmin, ymax, xmin, ymin)
-
-            self.canvas.desenhar_linha(pontos_janela, cor="blue")
+            # Desenha a janela de recorte como um contorno fino, sempre
+            # visível por cima de qualquer conteúdo (mesmo que coincida
+            # com o resultado do recorte)
+            self.canvas.desenhar_retangulo(xmin, ymin, xmax, ymax, cor="blue")
 
             # Desenha a linha original inteira em cinza, como referência
             pontos_original = Bresenham.calcular_reta(x1, y1, x2, y2)
@@ -342,6 +344,50 @@ class MainWindow(QMainWindow):
                     f"Linha recortada de ({xr1}, {yr1}) a ({xr2}, {yr2}) "
                     f"com {len(pixels_recortados)} pixels visíveis "
                     f"dentro da janela."
+                )
+
+        # -------------------------------------------------
+        # Recorte de Polígonos (Sutherland-Hodgman)
+        # -------------------------------------------------
+
+        elif algoritmo == "Recorte de Polígonos":
+
+            vertices = parametros["pontos"]
+            xmin, ymin, xmax, ymax = parametros["janela"]
+
+            # Desenha a janela de recorte como um contorno fino, sempre
+            # visível por cima de qualquer conteúdo (mesmo que coincida
+            # com o resultado do recorte)
+            self.canvas.desenhar_retangulo(xmin, ymin, xmax, ymax, cor="blue")
+
+            # Desenha o polígono original inteiro em cinza, como referência
+            pixels_original = Polilinha.calcular_polilinha(
+                vertices, fechada=True
+            )
+            self.canvas.desenhar_linha(pixels_original, cor="lightgray")
+
+            resultado = RecortePoligonos.recortar(
+                vertices, xmin, ymin, xmax, ymax
+            )
+
+            if resultado is None:
+                self.statusBar().showMessage(
+                    "O polígono está totalmente fora da janela de recorte "
+                    "(nada foi recortado)."
+                )
+            else:
+                pixels_recortado = Polilinha.calcular_polilinha(
+                    resultado, fechada=True
+                )
+
+                # Desenha o polígono recortado (visível) em vermelho, por
+                # cima do polígono original em cinza
+                self.canvas.desenhar_linha(pixels_recortado, cor="red")
+
+                self.statusBar().showMessage(
+                    f"Polígono recortado com {len(resultado)} vértices "
+                    f"e {len(pixels_recortado)} pixels visíveis dentro "
+                    f"da janela."
                 )
 
         # -------------------------------------------------

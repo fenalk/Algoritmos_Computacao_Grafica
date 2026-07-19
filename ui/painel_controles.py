@@ -15,11 +15,19 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from ui.canvas_widget import CanvasWidget
+
 
 class PainelControles(QWidget):
     """
     Painel lateral responsável pela interação do usuário.
     """
+
+    # Limite de coordenadas válidas da área de desenho (canvas), usado
+    # para validar que a janela de recorte é sempre MENOR que a área
+    # de desenho, nunca igual ou maior.
+    LIMITE_CANVAS_X = CanvasWidget.LARGURA_CENA // (2 * CanvasWidget.PIXEL_SIZE)
+    LIMITE_CANVAS_Y = CanvasWidget.ALTURA_CENA // (2 * CanvasWidget.PIXEL_SIZE)
 
     ALGORITMOS = [
         "Bresenham",
@@ -117,18 +125,23 @@ class PainelControles(QWidget):
         )
 
         # --- Recorte de Linhas: janela de recorte (xmin, ymin, xmax, ymax) ---
+        # A janela precisa ser sempre menor que a área de desenho, por isso
+        # os placeholders já indicam o intervalo válido de coordenadas.
+
+        limite_x = self.LIMITE_CANVAS_X - 1
+        limite_y = self.LIMITE_CANVAS_Y - 1
 
         self.campo_clip_xmin = QLineEdit()
-        self.campo_clip_xmin.setPlaceholderText("Xmin da janela")
+        self.campo_clip_xmin.setPlaceholderText(f"Xmin (> -{limite_x})")
 
         self.campo_clip_ymin = QLineEdit()
-        self.campo_clip_ymin.setPlaceholderText("Ymin da janela")
+        self.campo_clip_ymin.setPlaceholderText(f"Ymin (> -{limite_y})")
 
         self.campo_clip_xmax = QLineEdit()
-        self.campo_clip_xmax.setPlaceholderText("Xmax da janela")
+        self.campo_clip_xmax.setPlaceholderText(f"Xmax (< {limite_x})")
 
         self.campo_clip_ymax = QLineEdit()
-        self.campo_clip_ymax.setPlaceholderText("Ymax da janela")
+        self.campo_clip_ymax.setPlaceholderText(f"Ymax (< {limite_y})")
 
     # ------------------------------------------------------------------
 
@@ -212,7 +225,11 @@ class PainelControles(QWidget):
     # ------------------------------------------------------------------
 
     def atualizar_parametros(self, algoritmo):
-        eh_pontos_dinamicos = algoritmo in ("Polilinha", "Preenchimento")
+        eh_pontos_dinamicos = algoritmo in (
+            "Polilinha",
+            "Preenchimento",
+            "Recorte de Polígonos",
+        )
 
         self.grupo_pontos_polilinha.setVisible(eh_pontos_dinamicos)
 
@@ -291,6 +308,23 @@ class PainelControles(QWidget):
             self.campo_x1.setPlaceholderText("Semente X")
             self.campo_y1.setPlaceholderText("Semente Y")
 
+        elif algoritmo == "Recorte de Polígonos":
+            self.grupo_pontos_polilinha.setTitle("Vértices do Polígono (N ≥ 3)")
+            self.checkbox_fechar_poligono.setVisible(False)
+            self.checkbox_fechar_poligono.setChecked(True)
+
+            # Reaproveita o grupo de parâmetros apenas para a janela de recorte
+            self.grupo_parametros.setVisible(True)
+            self.layout_parametros.setRowVisible(self.campo_x1, False)
+            self.layout_parametros.setRowVisible(self.campo_y1, False)
+            self.layout_parametros.setRowVisible(self.campo_x2, False)
+            self.layout_parametros.setRowVisible(self.campo_y2, False)
+
+            self.layout_parametros.setRowVisible(self.campo_clip_xmin, True)
+            self.layout_parametros.setRowVisible(self.campo_clip_ymin, True)
+            self.layout_parametros.setRowVisible(self.campo_clip_xmax, True)
+            self.layout_parametros.setRowVisible(self.campo_clip_ymax, True)
+
         elif algoritmo == "Recorte de Linhas":
             self.campo_x1.setPlaceholderText("Linha - X1")
             self.campo_y1.setPlaceholderText("Linha - Y1")
@@ -340,6 +374,28 @@ class PainelControles(QWidget):
                     "semente": None
                 }
 
+        if algoritmo == "Recorte de Polígonos":
+            vertices = self.obter_pontos_polilinha()
+
+            if not vertices or len(vertices) < 3:
+                return None
+
+            try:
+                xmin = int(self.campo_clip_xmin.text())
+                ymin = int(self.campo_clip_ymin.text())
+                xmax = int(self.campo_clip_xmax.text())
+                ymax = int(self.campo_clip_ymax.text())
+            except ValueError:
+                return None
+
+            if xmin >= xmax or ymin >= ymax:
+                return None
+
+            return {
+                "pontos": vertices,
+                "janela": (xmin, ymin, xmax, ymax),
+            }
+
         if algoritmo == "Recorte de Linhas":
             try:
                 x1 = int(self.campo_x1.text())
@@ -352,7 +408,7 @@ class PainelControles(QWidget):
                 xmax = int(self.campo_clip_xmax.text())
                 ymax = int(self.campo_clip_ymax.text())
 
-                if xmin >= xmax or ymin >= ymax:
+                if not self.janela_recorte_valida(xmin, ymin, xmax, ymax):
                     return None
 
                 return {

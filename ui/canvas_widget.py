@@ -111,6 +111,51 @@ class CanvasWidget(QGraphicsView):
 
     # ------------------------------------------------------------------
 
+    def desenhar_retangulo(
+        self,
+        xmin: int,
+        ymin: int,
+        xmax: int,
+        ymax: int,
+        cor="blue",
+        espessura: int = 3,
+    ):
+        """
+        Desenha o CONTORNO de um retângulo (em coordenadas lógicas de
+        pixel, inclusive nos dois extremos) usando uma linha fina real,
+        em vez de pixels "quadrados". É usado para representar a janela
+        de recorte.
+
+        Diferente de desenhar_linha/desenhar_pixel, este item recebe um
+        zValue bem alto, garantindo que a janela permaneça sempre
+        visível por cima de qualquer conteúdo desenhado (mesmo quando o
+        resultado de um recorte coincide exatamente com a borda da
+        janela).
+        """
+
+        x_esquerda = xmin * self.PIXEL_SIZE
+        x_direita = (xmax + 1) * self.PIXEL_SIZE
+        y_topo = -(ymax + 1) * self.PIXEL_SIZE
+        y_base = -ymin * self.PIXEL_SIZE
+
+        retangulo_item = QGraphicsRectItem(
+            x_esquerda,
+            y_topo,
+            x_direita - x_esquerda,
+            y_base - y_topo,
+        )
+
+        pen = QPen(QColor(cor))
+        pen.setWidth(espessura)
+
+        retangulo_item.setPen(pen)
+        retangulo_item.setBrush(QBrush(Qt.BrushStyle.NoBrush))
+        retangulo_item.setZValue(2)
+
+        self.scene.addItem(retangulo_item)
+
+    # ------------------------------------------------------------------
+
     def limpar_canvas(self):
         self.scene.clear()
         self.desenhar_grade()
