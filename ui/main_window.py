@@ -126,7 +126,7 @@ class MainWindow(QMainWindow):
             )
 
         # -------------------------------------------------
-        # Círculo (CORRIGIDO)
+        # Círculo
         # -------------------------------------------------
 
         elif algoritmo == "Círculo":
@@ -277,7 +277,10 @@ class MainWindow(QMainWindow):
 
             contorno, preenchidos = resultado
 
+            # Desenha o contorno em preto
             self.canvas.desenhar_linha(contorno)
+            
+            # Desenha o preenchimento em laranja
             self.canvas.desenhar_linha(
                 preenchidos,
                 cor="darkorange",
@@ -295,6 +298,9 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(
                 f"Algoritmo '{algoritmo}' ainda não implementado."
             )
+        
+        # Força a atualização da view
+        self.canvas.viewport().update()
 
     # -----------------------------------------------------
 

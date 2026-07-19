@@ -1,132 +1,124 @@
-"""
-Módulo responsável pelos algoritmos de preenchimento
-de polígonos: Flood Fill e Scanline.
-"""
+"""Algoritmos de preenchimento de polígonos: Flood Fill e Scanline."""
 
-from algoritmos.polilinha import Polilinha
+from math import ceil, floor
+from typing import Optional
+
+from algoritmos.bresenham import Bresenham
+
+Ponto = tuple[int, int]
+Limites = tuple[int, int, int, int]
 
 
 class Preenchimento:
-    """
-    Implementação dos algoritmos de preenchimento
-    recursivo (Flood Fill) e por varredura (Scanline).
-    """
+    LIMITE_SEGURANCA = 1_000_000
+    MARGEM_LIMITES = 2
 
-    LIMITE_SEGURANCA = 5000
+    # ---------- contorno ----------
 
     @staticmethod
-    def calcular_contorno(
-        vertices: list[tuple[int, int]]
-    ) -> list[tuple[int, int]] | None:
-        """
-        Calculo do contorno do polígono utilizando
-        o algoritmo de Bresenham.
-        """
-        if vertices is None or len(vertices) < 3:
+    def calcular_contorno(vertices: list[Ponto]) -> Optional[list[Ponto]]:
+        """Rasteriza as arestas com Bresenham, fechando o polígono."""
+        if not vertices or len(vertices) < 3:
             return None
 
-        return Polilinha.calcular_polilinha(
-            vertices,
-            fechada=True
-        )
+        contorno = []
+        n = len(vertices)
+
+        for i in range(n):
+            x1, y1 = vertices[i]
+            x2, y2 = vertices[(i + 1) % n]
+            segmento = Bresenham.calcular_reta(x1, y1, x2, y2)
+
+            if not segmento:
+                return None
+
+            # Tapa "furos" diagonais (ex: (5,5)->(6,6)), que só se tocam
+            # pelo canto e deixariam o Flood Fill vazar do polígono.
+            for (px, py), (qx, qy) in zip(segmento, segmento[1:]):
+                if px != qx and py != qy:
+                    contorno.append((qx, py))
+            contorno.extend(segmento)
+
+        return list(dict.fromkeys(contorno))  # remove duplicados, mantém ordem
+
+    @staticmethod
+    def calcular_bounding_box(vertices: list[Ponto], margem: int = MARGEM_LIMITES) -> Limites:
+        xs, ys = [p[0] for p in vertices], [p[1] for p in vertices]
+        return min(xs) - margem, max(xs) + margem, min(ys) - margem, max(ys) + margem
+
+    @staticmethod
+    def _dentro(x: int, y: int, limites: Limites) -> bool:
+        x_min, x_max, y_min, y_max = limites
+        return x_min <= x <= x_max and y_min <= y <= y_max
+
+    # ---------- flood fill ----------
 
     @staticmethod
     def preencher_recursivo(
-        vertices: list[tuple[int, int]],
-        semente: tuple[int, int],
-        limites: tuple[int, int, int, int] = (-15, 15, -15, 15) # <--- CORREÇÃO: Limites iniciais mais condizentes com sua grade mundial
-    ) -> tuple[
-        list[tuple[int, int]],
-        list[tuple[int, int]]
-    ] | None:
-        """
-        Executa o preenchimento Flood Fill usando pilha (iterativo para evitar RecursionError).
-        """
+        vertices: list[Ponto], semente: Ponto, limites: Optional[Limites] = None
+    ) -> Optional[tuple[list[Ponto], list[Ponto]]]:
         contorno = Preenchimento.calcular_contorno(vertices)
-
         if contorno is None:
             return None
 
-        contorno_pixels = set(contorno)
+        pixels_contorno = set(contorno)
+        limites = limites or Preenchimento.calcular_bounding_box(vertices)
 
-        if semente in contorno_pixels:
+        if semente in pixels_contorno or not Preenchimento._dentro(*semente, limites):
             return None
 
-        x_min, x_max, y_min, y_max = limites
-
-        pixels_visitados = set()
-        pixels_preenchidos = []
-
+        visitados = set()
+        preenchidos = []
         pilha = [semente]
 
         while pilha:
             x, y = pilha.pop()
+            atual = (x, y)
 
-            if (x, y) in pixels_visitados or (x, y) in contorno_pixels:
+            if atual in visitados or atual in pixels_contorno:
+                continue
+            if not Preenchimento._dentro(x, y, limites):
                 continue
 
-            # Garante que o preenchimento não vai tentar renderizar infinitamente fora da área visível do canvas
-            if not (x_min <= x <= x_max and y_min <= y <= y_max):
-                continue
+            visitados.add(atual)
+            preenchidos.append(atual)
 
-            pixels_visitados.add((x, y))
-            pixels_preenchidos.append((x, y))
-
-            if len(pixels_preenchidos) > Preenchimento.LIMITE_SEGURANCA:
+            if len(preenchidos) > Preenchimento.LIMITE_SEGURANCA:
                 return None
 
-            pilha.extend([
-                (x + 1, y),
-                (x - 1, y),
-                (x, y + 1),
-                (x, y - 1),
-            ])
+            pilha.extend([(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)])
 
-        return contorno, pixels_preenchidos
+        return contorno, preenchidos
+
+    # ---------- scanline ----------
 
     @staticmethod
-    def preencher_varredura(
-        vertices: list[tuple[int, int]]
-    ) -> tuple[
-        list[tuple[int, int]],
-        list[tuple[int, int]]
-    ] | None:
-        """
-        Executa o preenchimento por varredura (Scanline).
-        """
+    def preencher_varredura(vertices: list[Ponto]) -> Optional[tuple[list[Ponto], list[Ponto]]]:
         contorno = Preenchimento.calcular_contorno(vertices)
-
         if contorno is None:
             return None
 
-        pixels_preenchidos = []
-        quantidade_vertices = len(vertices)
-        coordenadas_y = [y for _, y in vertices]
+        n = len(vertices)
+        ys = [y for _, y in vertices]
+        preenchidos = set()
 
-        y_min = min(coordenadas_y)
-        y_max = max(coordenadas_y)
-
-        for y in range(y_min, y_max + 1):
+        for y in range(min(ys), max(ys) + 1):
             intersecoes = []
 
-            for indice in range(quantidade_vertices):
-                x1, y1 = vertices[indice]
-                x2, y2 = vertices[(indice + 1) % quantidade_vertices]
+            for i in range(n):
+                x1, y1 = vertices[i]
+                x2, y2 = vertices[(i + 1) % n]
 
                 if y1 == y2:
                     continue
-
                 if min(y1, y2) <= y < max(y1, y2):
-                    x = x1 + (y - y1) * (x2 - x1) / (y2 - y1)
-                    intersecoes.append(x)
+                    intersecoes.append(x1 + (y - y1) * (x2 - x1) / (y2 - y1))
 
             intersecoes.sort()
 
-            for indice in range(0, len(intersecoes) - 1, 2):
-                x_inicio = round(intersecoes[indice])
-                x_fim = round(intersecoes[indice + 1])
+            for i in range(0, len(intersecoes) - 1, 2):
+                x_inicio, x_fim = ceil(intersecoes[i]), floor(intersecoes[i + 1])
+                x_inicio, x_fim = min(x_inicio, x_fim), max(x_inicio, x_fim)
+                preenchidos.update((x, y) for x in range(x_inicio, x_fim + 1))
 
-                for x in range(x_inicio, x_fim + 1):
-                    pixels_preenchidos.append((x, y))
-
-        return contorno, pixels_preenchidos
+        return contorno, list(preenchidos)
