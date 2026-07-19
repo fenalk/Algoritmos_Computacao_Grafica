@@ -15,6 +15,7 @@ from algoritmos.curvas_de_bezier import Bezier
 from algoritmos.elipse import Elipse
 from algoritmos.polilinha import Polilinha
 from algoritmos.preenchimento import Preenchimento
+from algoritmos.recorte_linhas import RecorteLinhas
 from ui.canvas_widget import CanvasWidget
 from ui.painel_controles import PainelControles
 
@@ -97,6 +98,10 @@ class MainWindow(QMainWindow):
                 self.statusBar().showMessage(
                     "Informe um polígono válido e, no modo recursivo, um ponto semente."
                 )
+            elif algoritmo == "Recorte de Linhas":
+                self.statusBar().showMessage(
+                    "Informe a linha e uma janela de recorte válida (Xmin < Xmax e Ymin < Ymax)."
+                )
             else:
                 self.statusBar().showMessage(
                     "Preencha os parâmetros corretamente."
@@ -116,15 +121,6 @@ class MainWindow(QMainWindow):
                 y1,
                 x2,
                 y2,
-            )
-        
-        elif algoritmo == "Círculo":
-            xc, yc, raio = parametros
-            pontos = Circulo.calcular_circulo(xc, yc, raio)
-            self.canvas.desenhar_linha(pontos)
-            self.statusBar().showMessage(
-                f"Círculo de centro ({xc}, {yc}) e raio {raio} "
-                f"desenhado com {len(pontos)} pixels."
             )
 
             self.canvas.desenhar_linha(pontos)
@@ -288,7 +284,7 @@ class MainWindow(QMainWindow):
 
             # Desenha o contorno em preto
             self.canvas.desenhar_linha(contorno)
-            
+
             # Desenha o preenchimento em laranja
             self.canvas.desenhar_linha(
                 preenchidos,
@@ -301,13 +297,61 @@ class MainWindow(QMainWindow):
             )
 
         # -------------------------------------------------
+        # Recorte de Linhas (Cohen-Sutherland)
+        # -------------------------------------------------
+
+        elif algoritmo == "Recorte de Linhas":
+
+            x1, y1, x2, y2 = parametros["linha"]
+            xmin, ymin, xmax, ymax = parametros["janela"]
+
+            # Desenha a janela de recorte (retângulo) em azul
+            pontos_janela = []
+            pontos_janela += Bresenham.calcular_reta(xmin, ymin, xmax, ymin)
+            pontos_janela += Bresenham.calcular_reta(xmax, ymin, xmax, ymax)
+            pontos_janela += Bresenham.calcular_reta(xmax, ymax, xmin, ymax)
+            pontos_janela += Bresenham.calcular_reta(xmin, ymax, xmin, ymin)
+
+            self.canvas.desenhar_linha(pontos_janela, cor="blue")
+
+            # Desenha a linha original inteira em cinza, como referência
+            pontos_original = Bresenham.calcular_reta(x1, y1, x2, y2)
+            self.canvas.desenhar_linha(pontos_original, cor="lightgray")
+
+            resultado = RecorteLinhas.recortar(
+                x1, y1, x2, y2, xmin, ymin, xmax, ymax
+            )
+
+            if resultado is None:
+                self.statusBar().showMessage(
+                    "A linha está totalmente fora da janela de recorte "
+                    "(nada foi recortado)."
+                )
+            else:
+                xr1, yr1, xr2, yr2 = resultado
+
+                pixels_recortados = Bresenham.calcular_reta(
+                    xr1, yr1, xr2, yr2
+                )
+
+                # Desenha a parte recortada (visível) em vermelho, por
+                # cima da linha original em cinza
+                self.canvas.desenhar_linha(pixels_recortados, cor="red")
+
+                self.statusBar().showMessage(
+                    f"Linha recortada de ({xr1}, {yr1}) a ({xr2}, {yr2}) "
+                    f"com {len(pixels_recortados)} pixels visíveis "
+                    f"dentro da janela."
+                )
+
+        # -------------------------------------------------
 
         else:
 
             self.statusBar().showMessage(
                 f"Algoritmo '{algoritmo}' ainda não implementado."
             )
-        
+
         # Força a atualização da view
         self.canvas.viewport().update()
 
