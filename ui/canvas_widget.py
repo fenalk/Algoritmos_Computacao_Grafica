@@ -1,3 +1,7 @@
+"""
+Módulo responsável pela renderização dos algoritmos gráficos.
+"""
+
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QBrush, QColor, QPen
 from PySide6.QtWidgets import (
@@ -92,8 +96,7 @@ class CanvasWidget(QGraphicsView):
         self.scene.addItem(pixel_item)
 
     # ------------------------------------------------------------------
-    # Antes estava aninhado dentro de desenhar_pixel: por isso nunca
-    # virava um método utilizável (self.desenhar_linha não existia).
+
     def desenhar_linha(
         self,
         pontos,

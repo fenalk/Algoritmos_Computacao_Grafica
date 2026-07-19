@@ -108,6 +108,13 @@ class PainelControles(QWidget):
             "Fechar (ligar último ao primeiro)"
         )
 
+        # --- Preenchimento: tipo (recursivo/varredura) + semente ---
+
+        self.combo_tipo_preenchimento = QComboBox()
+        self.combo_tipo_preenchimento.addItems(
+            ["Recursivo (flood fill)", "Varredura (scanline)"]
+        )
+
     # ------------------------------------------------------------------
 
     def criar_layout(self):
@@ -121,6 +128,7 @@ class PainelControles(QWidget):
 
         self.layout_parametros = QFormLayout()
         self.layout_parametros.addRow("Grau:", self.combo_grau_bezier)
+        self.layout_parametros.addRow("Tipo:", self.combo_tipo_preenchimento)
         self.layout_parametros.addRow("X1:", self.campo_x1)
         self.layout_parametros.addRow("Y1:", self.campo_y1)
         self.layout_parametros.addRow("Ctrl1 X:", self.campo_ctrl1_x)
@@ -153,7 +161,7 @@ class PainelControles(QWidget):
         layout_botoes.addWidget(self.botao_desenhar)
         layout_botoes.addWidget(self.botao_limpar)
 
-        # --- Montagem final (cada grupo adicionado uma única vez) ---
+        # --- Montagem final ---
 
         layout_principal.addWidget(self.grupo_algoritmo)
         layout_principal.addWidget(self.grupo_parametros)
@@ -172,31 +180,38 @@ class PainelControles(QWidget):
         self.combo_grau_bezier.currentTextChanged.connect(
             lambda _: self.atualizar_parametros(self.algoritmo_selecionado())
         )
-
         self.botao_adicionar_ponto.clicked.connect(
             self.adicionar_ponto_polilinha
         )
         self.botao_remover_ponto.clicked.connect(
             self.remover_ponto_polilinha
         )
+        self.combo_tipo_preenchimento.currentTextChanged.connect(
+            lambda _: self.atualizar_parametros(self.algoritmo_selecionado())
+        )
 
     # ------------------------------------------------------------------
 
     def atualizar_parametros(self, algoritmo):
-        eh_polilinha = algoritmo == "Polilinha"
+        eh_pontos_dinamicos = algoritmo in ("Polilinha", "Preenchimento")
 
-        # Alterna entre o grupo de parâmetros fixos (Bresenham,
-        # Círculo, Bézier) e o grupo de pontos dinâmicos (Polilinha)
-        self.grupo_parametros.setVisible(not eh_polilinha)
-        self.grupo_pontos_polilinha.setVisible(eh_polilinha)
+        self.grupo_pontos_polilinha.setVisible(eh_pontos_dinamicos)
 
-        # Por padrão, esconde tudo que é específico de Bézier
+        # Por padrão, oculta tudo que é específico de outros modos
         self.layout_parametros.setRowVisible(self.combo_grau_bezier, False)
+        self.layout_parametros.setRowVisible(self.combo_tipo_preenchimento, False)
         self.layout_parametros.setRowVisible(self.campo_ctrl1_x, False)
         self.layout_parametros.setRowVisible(self.campo_ctrl1_y, False)
         self.layout_parametros.setRowVisible(self.campo_ctrl2_x, False)
         self.layout_parametros.setRowVisible(self.campo_ctrl2_y, False)
+        
+        # Visibilidade padrão dos campos numéricos comuns
+        self.layout_parametros.setRowVisible(self.campo_x1, True)
+        self.layout_parametros.setRowVisible(self.campo_y1, True)
+        self.layout_parametros.setRowVisible(self.campo_x2, True)
         self.layout_parametros.setRowVisible(self.campo_y2, True)
+
+        self.grupo_parametros.setVisible(not eh_pontos_dinamicos)
 
         if algoritmo == "Bresenham":
             self.campo_x1.setPlaceholderText("Digite X1")
@@ -208,9 +223,8 @@ class PainelControles(QWidget):
             self.campo_x1.setPlaceholderText("Centro X")
             self.campo_y1.setPlaceholderText("Centro Y")
             self.campo_x2.setPlaceholderText("Raio")
-
             self.layout_parametros.setRowVisible(self.campo_y2, False)
-        
+
         elif algoritmo == "Elipse":
             self.campo_x1.setPlaceholderText("Centro X")
             self.campo_y1.setPlaceholderText("Centro Y")
@@ -227,114 +241,111 @@ class PainelControles(QWidget):
             self.layout_parametros.setRowVisible(self.campo_ctrl1_x, True)
             self.layout_parametros.setRowVisible(self.campo_ctrl1_y, True)
 
-            # Ponto de controle 2 só existe na curva cúbica (grau 3)
-            grau_cubico = self.combo_grau_bezier.currentText().startswith(
-                "Cúbica"
-            )
-            self.layout_parametros.setRowVisible(
-                self.campo_ctrl2_x, grau_cubico
-            )
-            self.layout_parametros.setRowVisible(
-                self.campo_ctrl2_y, grau_cubico
-            )
+            grau_cubico = self.combo_grau_bezier.currentText().startswith("Cúbica")
+            self.layout_parametros.setRowVisible(self.campo_ctrl2_x, grau_cubico)
+            self.layout_parametros.setRowVisible(self.campo_ctrl2_y, grau_cubico)
 
-        # "Polilinha" não usa nenhum campo do grupo_parametros: toda a
-        # entrada acontece em grupo_pontos_polilinha (já tratado acima).
+        elif algoritmo == "Polilinha":
+            self.grupo_pontos_polilinha.setTitle("Pontos da Polilinha (N > 3)")
+            self.checkbox_fechar_poligono.setVisible(True)
+
+        elif algoritmo == "Preenchimento":
+            self.grupo_pontos_polilinha.setTitle("Vértices do Polígono (N ≥ 3)")
+            self.checkbox_fechar_poligono.setVisible(False)
+            self.checkbox_fechar_poligono.setChecked(True)
+
+            self.layout_parametros.setRowVisible(self.combo_tipo_preenchimento, True)
+
+            eh_recursivo = self.combo_tipo_preenchimento.currentText().startswith("Recursivo")
+
+            # Gerencia de forma limpa o comportamento dinâmico do container de parâmetros
+            self.grupo_parametros.setVisible(True) 
+            self.layout_parametros.setRowVisible(self.campo_x1, eh_recursivo)
+            self.layout_parametros.setRowVisible(self.campo_y1, eh_recursivo)
+            self.layout_parametros.setRowVisible(self.campo_x2, False)
+            self.layout_parametros.setRowVisible(self.campo_y2, False)
+            
+            self.campo_x1.setPlaceholderText("Semente X")
+            self.campo_y1.setPlaceholderText("Semente Y")
 
     # ------------------------------------------------------------------
-    # Expõe os valores digitados para quem conectar os botões
-    # (a MainWindow), mantendo o painel sem conhecer os algoritmos.
 
     def obter_parametros(self):
         """
         Lê e valida os campos de acordo com o algoritmo selecionado.
-
-        Retorno
-        -------
-        tuple | list | None
-            - Bresenham: (x1, y1, x2, y2)
-            - Círculo:   (xc, yc, raio)
-            - Bézier:    lista de pontos [P0, P1, ..., Pn]
-            - Polilinha: lista de pontos [(x0,y0), ..., (xn,yn)]
-              com N > 3
-            ou None caso algum campo esteja vazio/inválido.
         """
-
         algoritmo = self.algoritmo_selecionado()
 
         if algoritmo == "Polilinha":
             pontos = self.obter_pontos_polilinha()
+            return pontos if len(pontos) > 3 else None
 
-            if len(pontos) <= 3:
+        if algoritmo == "Preenchimento":
+            tipo_texto = self.combo_tipo_preenchimento.currentText()
+            tipo = "recursivo" if tipo_texto.startswith("Recursivo") else "varredura"
+            vertices = self.obter_pontos_polilinha()
+            
+            if not vertices or len(vertices) < 3:
                 return None
-
-            return pontos
+                
+            if tipo == "recursivo":
+                try:
+                    sx = int(self.campo_x1.text())
+                    sy = int(self.campo_y1.text())
+                    return {
+                        "tipo": "recursivo",
+                        "pontos": vertices,
+                        "semente": (sx, sy)
+                    }
+                except ValueError:
+                    return None
+            else:
+                return {
+                    "tipo": "varredura",
+                    "pontos": vertices,
+                    "semente": None
+                }
 
         try:
             if algoritmo == "Círculo":
                 xc = int(self.campo_x1.text())
                 yc = int(self.campo_y1.text())
                 raio = int(self.campo_x2.text())
-
-                if raio <= 0:
-                    return None
-
-                return xc, yc, raio
+                return (xc, yc, raio) if raio > 0 else None
         
             if algoritmo == "Elipse":
                 xc = int(self.campo_x1.text())
                 yc = int(self.campo_y1.text())
                 rx = int(self.campo_x2.text())
                 ry = int(self.campo_y2.text())
-
-                if rx <= 0 or ry <= 0:
-                    return None
-
-                return xc, yc, rx, ry
+                return (xc, yc, rx, ry) if (rx > 0 and ry > 0) else None
 
             if algoritmo == "Curva de Bézier":
                 p0 = (int(self.campo_x1.text()), int(self.campo_y1.text()))
                 p_final = (int(self.campo_x2.text()), int(self.campo_y2.text()))
-                ctrl1 = (
-                    int(self.campo_ctrl1_x.text()),
-                    int(self.campo_ctrl1_y.text()),
-                )
+                ctrl1 = (int(self.campo_ctrl1_x.text()), int(self.campo_ctrl1_y.text()))
 
-                grau_cubico = self.combo_grau_bezier.currentText().startswith(
-                    "Cúbica"
-                )
-
-                if grau_cubico:
-                    ctrl2 = (
-                        int(self.campo_ctrl2_x.text()),
-                        int(self.campo_ctrl2_y.text()),
-                    )
+                if self.combo_grau_bezier.currentText().startswith("Cúbica"):
+                    ctrl2 = (int(self.campo_ctrl2_x.text()), int(self.campo_ctrl2_y.text()))
                     return [p0, ctrl1, ctrl2, p_final]
-
                 return [p0, ctrl1, p_final]
 
+            # Por fim, trata o Bresenham (e os modos padrão estruturados de 4 pontos)
             x1 = int(self.campo_x1.text())
             y1 = int(self.campo_y1.text())
             x2 = int(self.campo_x2.text())
             y2 = int(self.campo_y2.text())
+            return x1, y1, x2, y2
+
         except ValueError:
             return None
-
-        return x1, y1, x2, y2
 
     def algoritmo_selecionado(self):
         return self.combo_algoritmos.currentText()
 
     # ------------------------------------------------------------------
-    # Polilinha: adicionar/remover/ler pontos digitados pelo usuário
-    # ------------------------------------------------------------------
 
     def adicionar_ponto_polilinha(self):
-        """
-        Lê X e Y digitados e adiciona o ponto à lista da polilinha.
-        Ignora silenciosamente entradas inválidas (não numéricas).
-        """
-
         try:
             x = int(self.campo_ponto_x.text())
             y = int(self.campo_ponto_y.text())
@@ -342,35 +353,22 @@ class PainelControles(QWidget):
             return
 
         self.lista_pontos_polilinha.addItem(f"({x}, {y})")
-
         self.campo_ponto_x.clear()
         self.campo_ponto_y.clear()
         self.campo_ponto_x.setFocus()
 
     def remover_ponto_polilinha(self):
-        """
-        Remove o ponto atualmente selecionado na lista, se houver.
-        """
-
         linha_selecionada = self.lista_pontos_polilinha.currentRow()
-
         if linha_selecionada >= 0:
             self.lista_pontos_polilinha.takeItem(linha_selecionada)
 
     def obter_pontos_polilinha(self):
-        """
-        Converte os itens da lista (texto "(x, y)") de volta para
-        uma lista de tuplas inteiras.
-        """
-
         pontos = []
-
         for i in range(self.lista_pontos_polilinha.count()):
             texto = self.lista_pontos_polilinha.item(i).text()
             texto = texto.strip("()")
             x_str, y_str = texto.split(",")
             pontos.append((int(x_str.strip()), int(y_str.strip())))
-
         return pontos
 
     def polilinha_fechada(self):
