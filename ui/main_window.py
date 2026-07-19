@@ -17,6 +17,7 @@ from algoritmos.polilinha import Polilinha
 from algoritmos.preenchimento import Preenchimento
 from algoritmos.recorte_linhas import RecorteLinhas
 from algoritmos.recorte_poligono import RecortePoligonos
+from algoritmos.transformacoes_geometricas import Transformacoes
 from ui.canvas_widget import CanvasWidget
 from ui.painel_controles import PainelControles
 
@@ -107,6 +108,11 @@ class MainWindow(QMainWindow):
                 self.statusBar().showMessage(
                     "Informe pelo menos 3 vértices e uma janela de recorte válida "
                     "(Xmin < Xmax e Ymin < Ymax)."
+                )
+            elif algoritmo == "Transformações Geométricas":
+                self.statusBar().showMessage(
+                    "Informe pelo menos 3 vértices e os parâmetros da "
+                    "transformação selecionada (translação, escala ou rotação)."
                 )
             else:
                 self.statusBar().showMessage(
@@ -389,6 +395,81 @@ class MainWindow(QMainWindow):
                     f"e {len(pixels_recortado)} pixels visíveis dentro "
                     f"da janela."
                 )
+
+        # -------------------------------------------------
+        # Transformações Geométricas (translação, escala, rotação)
+        # -------------------------------------------------
+
+        elif algoritmo == "Transformações Geométricas":
+
+            vertices = parametros["pontos"]
+            tipo = parametros["tipo"]
+
+            # Desenha o polígono original em cinza, como referência
+            pixels_original = Polilinha.calcular_polilinha(
+                vertices, fechada=True
+            )
+            self.canvas.desenhar_linha(pixels_original, cor="lightgray")
+
+            if tipo == "translacao":
+
+                dx = parametros["dx"]
+                dy = parametros["dy"]
+
+                transformado = Transformacoes.transladar(vertices, dx, dy)
+
+                descricao = f"translação (dx={dx:g}, dy={dy:g})"
+
+            elif tipo == "escala":
+
+                sx = parametros["sx"]
+                sy = parametros["sy"]
+                ponto_fixo = parametros["ponto_fixo"]
+
+                transformado = Transformacoes.escalar(
+                    vertices, sx, sy, ponto_fixo
+                )
+
+                # Marca o ponto fixo em verde, para referência visual
+                self.canvas.desenhar_pixel(
+                    round(ponto_fixo[0]), round(ponto_fixo[1]), cor="green"
+                )
+
+                descricao = (
+                    f"escala (Sx={sx:g}, Sy={sy:g}, "
+                    f"ponto fixo=({ponto_fixo[0]:g}, {ponto_fixo[1]:g}))"
+                )
+
+            else:  # rotacao
+
+                angulo = parametros["angulo"]
+                pivo = parametros["pivo"]
+
+                transformado = Transformacoes.rotacionar(
+                    vertices, angulo, pivo
+                )
+
+                # Marca o pivô em verde, para referência visual
+                self.canvas.desenhar_pixel(
+                    round(pivo[0]), round(pivo[1]), cor="green"
+                )
+
+                descricao = (
+                    f"rotação ({angulo:g}°, pivô=({pivo[0]:g}, {pivo[1]:g}))"
+                )
+
+            pixels_transformado = Polilinha.calcular_polilinha(
+                transformado, fechada=True
+            )
+
+            # Desenha o polígono transformado (resultado) em vermelho,
+            # por cima do polígono original em cinza
+            self.canvas.desenhar_linha(pixels_transformado, cor="red")
+
+            self.statusBar().showMessage(
+                f"Transformação de {descricao} aplicada. Polígono "
+                f"resultante com {len(transformado)} vértices."
+            )
 
         # -------------------------------------------------
 
