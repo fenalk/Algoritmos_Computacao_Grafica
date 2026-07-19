@@ -12,14 +12,7 @@ import math
 
 
 class Projecoes:
-    """
-    Implementação das três projeções clássicas usadas em Computação
-    Gráfica para representar um sólido 3D em um plano 2D.
-    """
 
-    # ------------------------------------------------------------------
-    # Projeção Ortográfica (paralela, descarta um dos três eixos)
-    # ------------------------------------------------------------------
 
     @staticmethod
     def projetar_ortografica(vertices, vista="frontal"):

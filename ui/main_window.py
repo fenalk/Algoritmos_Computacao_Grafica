@@ -15,6 +15,7 @@ from algoritmos.curvas_de_bezier import Bezier
 from algoritmos.elipse import Elipse
 from algoritmos.polilinha import Polilinha
 from algoritmos.preenchimento import Preenchimento
+from algoritmos.projecoes import Projecoes
 from algoritmos.recorte_linhas import RecorteLinhas
 from algoritmos.recorte_poligono import RecortePoligonos
 from algoritmos.transformacoes_geometricas import Transformacoes
@@ -113,6 +114,12 @@ class MainWindow(QMainWindow):
                 self.statusBar().showMessage(
                     "Informe pelo menos 3 vértices e os parâmetros da "
                     "transformação selecionada (translação, escala ou rotação)."
+                )
+            elif algoritmo == "Projeções":
+                self.statusBar().showMessage(
+                    "Informe os vértices e arestas do sólido 3D (ou use o "
+                    "botão 'Usar cubo de exemplo') e os parâmetros da "
+                    "projeção selecionada."
                 )
             else:
                 self.statusBar().showMessage(
@@ -469,6 +476,55 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(
                 f"Transformação de {descricao} aplicada. Polígono "
                 f"resultante com {len(transformado)} vértices."
+            )
+
+        # -------------------------------------------------
+        # Projeções (Ortográfica, Oblíqua, Perspectiva)
+        # -------------------------------------------------
+
+        elif algoritmo == "Projeções":
+
+            vertices_3d = parametros["vertices"]
+            arestas = parametros["arestas"]
+            tipo = parametros["tipo"]
+
+            if tipo == "ortografica":
+                vista = parametros["vista"]
+                pontos_2d = Projecoes.projetar_ortografica(vertices_3d, vista)
+                descricao = f"ortográfica ({vista})"
+
+            elif tipo == "obliqua":
+                angulo = parametros["angulo"]
+                fator_l = parametros["fator_l"]
+                pontos_2d = Projecoes.projetar_obliqua(
+                    vertices_3d, angulo, fator_l
+                )
+                descricao = f"oblíqua (α={angulo:g}°, L={fator_l:g})"
+
+            else:  # perspectiva
+                distancia = parametros["distancia"]
+                pontos_2d = Projecoes.projetar_perspectiva(
+                    vertices_3d, distancia
+                )
+                descricao = f"perspectiva (d={distancia:g})"
+
+            # Rasteriza cada aresta do sólido (já projetada em 2D) com
+            # o algoritmo de Bresenham
+            total_pixels = 0
+
+            for indice_a, indice_b in arestas:
+                x1, y1 = pontos_2d[indice_a]
+                x2, y2 = pontos_2d[indice_b]
+
+                pixels_aresta = Bresenham.calcular_reta(x1, y1, x2, y2)
+                self.canvas.desenhar_linha(pixels_aresta)
+
+                total_pixels += len(pixels_aresta)
+
+            self.statusBar().showMessage(
+                f"Projeção {descricao} aplicada. "
+                f"{len(vertices_3d)} vértices, {len(arestas)} arestas, "
+                f"{total_pixels} pixels desenhados."
             )
 
         # -------------------------------------------------
