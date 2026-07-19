@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from algoritmos.projecoes import Projecoes
 from ui.canvas_widget import CanvasWidget
 
 
@@ -171,6 +172,60 @@ class PainelControles(QWidget):
         self.campo_transf_py = QLineEdit()
         self.campo_transf_py.setPlaceholderText("Y do pivô / ponto fixo")
 
+        # --- Projeções: tipo + parâmetros de cada projeção ---
+
+        self.combo_tipo_projecao = QComboBox()
+        self.combo_tipo_projecao.addItems(
+            ["Ortográfica", "Oblíqua", "Perspectiva"]
+        )
+
+        self.combo_vista_ortografica = QComboBox()
+        self.combo_vista_ortografica.addItems(
+            ["Frontal (plano XY)", "Superior (plano XZ)", "Lateral (plano ZY)"]
+        )
+
+        self.campo_proj_angulo = QLineEdit()
+        self.campo_proj_angulo.setPlaceholderText("Ângulo α em graus")
+
+        self.campo_proj_fator_l = QLineEdit()
+        self.campo_proj_fator_l.setPlaceholderText("Fator L (1=Cavalier, 0.5=Cabinet)")
+
+        self.campo_proj_distancia = QLineEdit()
+        self.campo_proj_distancia.setPlaceholderText("Distância d do observador")
+
+        # --- Projeções: entrada do sólido 3D (vértices + arestas) ---
+
+        self.grupo_solido_3d = QGroupBox("Sólido 3D (vértices e arestas)")
+
+        self.campo_v3d_x = QLineEdit()
+        self.campo_v3d_x.setPlaceholderText("X")
+
+        self.campo_v3d_y = QLineEdit()
+        self.campo_v3d_y.setPlaceholderText("Y")
+
+        self.campo_v3d_z = QLineEdit()
+        self.campo_v3d_z.setPlaceholderText("Z")
+
+        self.botao_adicionar_vertice3d = QPushButton("Adicionar vértice")
+        self.botao_remover_vertice3d = QPushButton("Remover vértice selecionado")
+
+        self.lista_vertices_3d = QListWidget()
+        self.lista_vertices_3d.setMinimumHeight(90)
+
+        self.campo_aresta_a = QLineEdit()
+        self.campo_aresta_a.setPlaceholderText("Índice A")
+
+        self.campo_aresta_b = QLineEdit()
+        self.campo_aresta_b.setPlaceholderText("Índice B")
+
+        self.botao_adicionar_aresta = QPushButton("Adicionar aresta")
+        self.botao_remover_aresta = QPushButton("Remover aresta selecionada")
+
+        self.lista_arestas = QListWidget()
+        self.lista_arestas.setMinimumHeight(90)
+
+        self.botao_cubo_exemplo = QPushButton("Usar cubo de exemplo")
+
     # ------------------------------------------------------------------
 
     def criar_layout(self):
@@ -205,6 +260,11 @@ class PainelControles(QWidget):
         self.layout_parametros.addRow("Ângulo (°):", self.campo_transf_angulo)
         self.layout_parametros.addRow("Pivô/Fixo X:", self.campo_transf_px)
         self.layout_parametros.addRow("Pivô/Fixo Y:", self.campo_transf_py)
+        self.layout_parametros.addRow("Projeção:", self.combo_tipo_projecao)
+        self.layout_parametros.addRow("Vista:", self.combo_vista_ortografica)
+        self.layout_parametros.addRow("Ângulo α (°):", self.campo_proj_angulo)
+        self.layout_parametros.addRow("Fator L:", self.campo_proj_fator_l)
+        self.layout_parametros.addRow("Distância d:", self.campo_proj_distancia)
         self.grupo_parametros.setLayout(self.layout_parametros)
 
         # --- Grupo de pontos da Polilinha ---
@@ -223,6 +283,32 @@ class PainelControles(QWidget):
 
         self.grupo_pontos_polilinha.setLayout(layout_pontos)
 
+        # --- Grupo do sólido 3D (vértices + arestas) para Projeções ---
+
+        layout_solido_3d = QVBoxLayout()
+
+        layout_campo_vertice3d = QHBoxLayout()
+        layout_campo_vertice3d.addWidget(self.campo_v3d_x)
+        layout_campo_vertice3d.addWidget(self.campo_v3d_y)
+        layout_campo_vertice3d.addWidget(self.campo_v3d_z)
+        layout_campo_vertice3d.addWidget(self.botao_adicionar_vertice3d)
+
+        layout_solido_3d.addLayout(layout_campo_vertice3d)
+        layout_solido_3d.addWidget(self.lista_vertices_3d)
+        layout_solido_3d.addWidget(self.botao_remover_vertice3d)
+
+        layout_campo_aresta = QHBoxLayout()
+        layout_campo_aresta.addWidget(self.campo_aresta_a)
+        layout_campo_aresta.addWidget(self.campo_aresta_b)
+        layout_campo_aresta.addWidget(self.botao_adicionar_aresta)
+
+        layout_solido_3d.addLayout(layout_campo_aresta)
+        layout_solido_3d.addWidget(self.lista_arestas)
+        layout_solido_3d.addWidget(self.botao_remover_aresta)
+        layout_solido_3d.addWidget(self.botao_cubo_exemplo)
+
+        self.grupo_solido_3d.setLayout(layout_solido_3d)
+
         # --- Botões ---
 
         layout_botoes = QHBoxLayout()
@@ -234,6 +320,7 @@ class PainelControles(QWidget):
         layout_principal.addWidget(self.grupo_algoritmo)
         layout_principal.addWidget(self.grupo_parametros)
         layout_principal.addWidget(self.grupo_pontos_polilinha)
+        layout_principal.addWidget(self.grupo_solido_3d)
         layout_principal.addStretch()
         layout_principal.addLayout(layout_botoes)
 
@@ -260,6 +347,24 @@ class PainelControles(QWidget):
         self.combo_tipo_transformacao.currentTextChanged.connect(
             lambda _: self.atualizar_parametros(self.algoritmo_selecionado())
         )
+        self.combo_tipo_projecao.currentTextChanged.connect(
+            lambda _: self.atualizar_parametros(self.algoritmo_selecionado())
+        )
+        self.botao_adicionar_vertice3d.clicked.connect(
+            self.adicionar_vertice_3d
+        )
+        self.botao_remover_vertice3d.clicked.connect(
+            self.remover_vertice_3d
+        )
+        self.botao_adicionar_aresta.clicked.connect(
+            self.adicionar_aresta
+        )
+        self.botao_remover_aresta.clicked.connect(
+            self.remover_aresta
+        )
+        self.botao_cubo_exemplo.clicked.connect(
+            self.carregar_cubo_exemplo
+        )
 
     # ------------------------------------------------------------------
 
@@ -272,6 +377,7 @@ class PainelControles(QWidget):
         )
 
         self.grupo_pontos_polilinha.setVisible(eh_pontos_dinamicos)
+        self.grupo_solido_3d.setVisible(algoritmo == "Projeções")
 
         # Por padrão, oculta tudo que é específico de outros modos
         self.layout_parametros.setRowVisible(self.combo_grau_bezier, False)
@@ -292,6 +398,11 @@ class PainelControles(QWidget):
         self.layout_parametros.setRowVisible(self.campo_transf_angulo, False)
         self.layout_parametros.setRowVisible(self.campo_transf_px, False)
         self.layout_parametros.setRowVisible(self.campo_transf_py, False)
+        self.layout_parametros.setRowVisible(self.combo_tipo_projecao, False)
+        self.layout_parametros.setRowVisible(self.combo_vista_ortografica, False)
+        self.layout_parametros.setRowVisible(self.campo_proj_angulo, False)
+        self.layout_parametros.setRowVisible(self.campo_proj_fator_l, False)
+        self.layout_parametros.setRowVisible(self.campo_proj_distancia, False)
 
         # Visibilidade padrão dos campos numéricos comuns
         self.layout_parametros.setRowVisible(self.campo_x1, True)
@@ -416,6 +527,28 @@ class PainelControles(QWidget):
                 self.layout_parametros.setRowVisible(self.campo_transf_px, True)
                 self.layout_parametros.setRowVisible(self.campo_transf_py, True)
 
+        elif algoritmo == "Projeções":
+            # Não usa o grupo de vértices 2D nem a área comum de X1/Y1/X2/Y2;
+            # usa o grupo dedicado do sólido 3D (vértices + arestas)
+            self.layout_parametros.setRowVisible(self.campo_x1, False)
+            self.layout_parametros.setRowVisible(self.campo_y1, False)
+            self.layout_parametros.setRowVisible(self.campo_x2, False)
+            self.layout_parametros.setRowVisible(self.campo_y2, False)
+
+            self.layout_parametros.setRowVisible(self.combo_tipo_projecao, True)
+
+            tipo_projecao = self.combo_tipo_projecao.currentText()
+
+            if tipo_projecao == "Ortográfica":
+                self.layout_parametros.setRowVisible(self.combo_vista_ortografica, True)
+
+            elif tipo_projecao == "Oblíqua":
+                self.layout_parametros.setRowVisible(self.campo_proj_angulo, True)
+                self.layout_parametros.setRowVisible(self.campo_proj_fator_l, True)
+
+            elif tipo_projecao == "Perspectiva":
+                self.layout_parametros.setRowVisible(self.campo_proj_distancia, True)
+
     # ------------------------------------------------------------------
 
     def obter_parametros(self):
@@ -522,6 +655,69 @@ class PainelControles(QWidget):
                         "pontos": vertices,
                         "angulo": angulo,
                         "pivo": (px, py),
+                    }
+            except ValueError:
+                return None
+
+            return None
+
+        if algoritmo == "Projeções":
+            vertices = self.obter_vertices_3d()
+            arestas = self.obter_arestas()
+
+            if not vertices or len(vertices) < 2 or not arestas:
+                return None
+
+            # Valida se todos os índices de aresta apontam para
+            # vértices que realmente existem na lista
+            n_vertices = len(vertices)
+            for indice_a, indice_b in arestas:
+                if not (0 <= indice_a < n_vertices and 0 <= indice_b < n_vertices):
+                    return None
+
+            tipo_texto = self.combo_tipo_projecao.currentText()
+
+            try:
+                if tipo_texto == "Ortográfica":
+                    vista_texto = self.combo_vista_ortografica.currentText()
+
+                    if vista_texto.startswith("Superior"):
+                        vista = "superior"
+                    elif vista_texto.startswith("Lateral"):
+                        vista = "lateral"
+                    else:
+                        vista = "frontal"
+
+                    return {
+                        "tipo": "ortografica",
+                        "vertices": vertices,
+                        "arestas": arestas,
+                        "vista": vista,
+                    }
+
+                if tipo_texto == "Oblíqua":
+                    angulo = float(self.campo_proj_angulo.text())
+                    fator_l = float(self.campo_proj_fator_l.text())
+
+                    return {
+                        "tipo": "obliqua",
+                        "vertices": vertices,
+                        "arestas": arestas,
+                        "angulo": angulo,
+                        "fator_l": fator_l,
+                    }
+
+                if tipo_texto == "Perspectiva":
+                    distancia = float(self.campo_proj_distancia.text())
+
+                    if distancia <= 0:
+                        return None
+
+                    return {
+                        "tipo": "perspectiva",
+                        "vertices": vertices,
+                        "arestas": arestas,
+                        "distancia": distancia,
                     }
             except ValueError:
                 return None
@@ -648,3 +844,82 @@ class PainelControles(QWidget):
 
     def polilinha_fechada(self):
         return self.checkbox_fechar_poligono.isChecked()
+
+    # ------------------------------------------------------------------
+    # Sólido 3D (vértices e arestas) - usado pelo algoritmo de Projeções
+    # ------------------------------------------------------------------
+
+    def adicionar_vertice_3d(self):
+        try:
+            x = float(self.campo_v3d_x.text())
+            y = float(self.campo_v3d_y.text())
+            z = float(self.campo_v3d_z.text())
+        except ValueError:
+            return
+
+        self.lista_vertices_3d.addItem(f"({x:g}, {y:g}, {z:g})")
+        self.campo_v3d_x.clear()
+        self.campo_v3d_y.clear()
+        self.campo_v3d_z.clear()
+        self.campo_v3d_x.setFocus()
+
+    def remover_vertice_3d(self):
+        linha_selecionada = self.lista_vertices_3d.currentRow()
+        if linha_selecionada >= 0:
+            self.lista_vertices_3d.takeItem(linha_selecionada)
+
+    def obter_vertices_3d(self):
+        vertices = []
+        for i in range(self.lista_vertices_3d.count()):
+            texto = self.lista_vertices_3d.item(i).text()
+            texto = texto.strip("()")
+            partes = [parte.strip() for parte in texto.split(",")]
+
+            if len(partes) != 3:
+                continue
+
+            x, y, z = (float(parte) for parte in partes)
+            vertices.append((x, y, z))
+
+        return vertices
+
+    def adicionar_aresta(self):
+        try:
+            indice_a = int(self.campo_aresta_a.text())
+            indice_b = int(self.campo_aresta_b.text())
+        except ValueError:
+            return
+
+        self.lista_arestas.addItem(f"{indice_a} - {indice_b}")
+        self.campo_aresta_a.clear()
+        self.campo_aresta_b.clear()
+        self.campo_aresta_a.setFocus()
+
+    def remover_aresta(self):
+        linha_selecionada = self.lista_arestas.currentRow()
+        if linha_selecionada >= 0:
+            self.lista_arestas.takeItem(linha_selecionada)
+
+    def obter_arestas(self):
+        arestas = []
+        for i in range(self.lista_arestas.count()):
+            texto = self.lista_arestas.item(i).text()
+            indice_a_str, indice_b_str = texto.split("-")
+            arestas.append((int(indice_a_str.strip()), int(indice_b_str.strip())))
+        return arestas
+
+    def carregar_cubo_exemplo(self):
+        """
+        Preenche as listas de vértices e arestas com um cubo canônico
+        de exemplo, pronto para ser projetado.
+        """
+
+        vertices, arestas = Projecoes.cubo_exemplo(lado=6)
+
+        self.lista_vertices_3d.clear()
+        for x, y, z in vertices:
+            self.lista_vertices_3d.addItem(f"({x:g}, {y:g}, {z:g})")
+
+        self.lista_arestas.clear()
+        for indice_a, indice_b in arestas:
+            self.lista_arestas.addItem(f"{indice_a} - {indice_b}")
