@@ -173,13 +173,34 @@ class CanvasWidget(QGraphicsView):
 
         passo = self.PIXEL_SIZE * 2
 
-        for x in range(-largura, largura + 1, passo):
+        # As posições são geradas a partir de 0 (que sempre coincide
+        # com uma borda real de célula, pois 0 é múltiplo de
+        # PIXEL_SIZE) e avançam em incrementos de `passo`. Isso
+        # garante que cada linha da grade caia exatamente sobre a
+        # borda de uma célula de pixel, em vez de no meio dela — o
+        # que aconteceria se a geração partisse de `-largura`
+        # (que não é necessariamente múltiplo de PIXEL_SIZE).
+        x = 0
+        while x <= largura:
             linha = self.scene.addLine(x, -altura, x, altura, pen)
             linha.setZValue(-1)
 
-        for y in range(-altura, altura + 1, passo):
+            if x != 0:
+                linha = self.scene.addLine(-x, -altura, -x, altura, pen)
+                linha.setZValue(-1)
+
+            x += passo
+
+        y = 0
+        while y <= altura:
             linha = self.scene.addLine(-largura, y, largura, y, pen)
             linha.setZValue(-1)
+
+            if y != 0:
+                linha = self.scene.addLine(-largura, -y, largura, -y, pen)
+                linha.setZValue(-1)
+
+            y += passo
 
     # ------------------------------------------------------------------
 
