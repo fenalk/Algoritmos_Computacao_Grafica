@@ -3,7 +3,8 @@
 Aplicação desktop em Python/PySide6 que implementa e visualiza, de forma interativa, os principais algoritmos de rasterização, recorte, transformação e projeção estudados em Computação Gráfica — permitindo desenhar retas, curvas, polígonos e sólidos 3D pixel a pixel em um canvas 2D.
 
 ## Aluna:
-Nome: Fernanda dos Santos Borges 
+Nome: Fernanda dos Santos Borges
+
 Matrícula: 202311140014
 
 ## Status do Projeto
