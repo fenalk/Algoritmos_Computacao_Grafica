@@ -1,11 +1,11 @@
-# Algoritmos de Computação Gráfica
-
-Aplicação desktop em Python/PySide6 que implementa e visualiza, de forma interativa, os principais algoritmos de rasterização, recorte, transformação e projeção estudados em Computação Gráfica — permitindo desenhar retas, curvas, polígonos e sólidos 3D pixel a pixel em um canvas 2D.
-
 ## Aluna:
 Nome: Fernanda dos Santos Borges
 
 Matrícula: 202311140014
+
+# Algoritmos de Computação Gráfica
+
+Aplicação desktop em Python/PySide6 que implementa e visualiza, de forma interativa, os principais algoritmos de rasterização, recorte, transformação e projeção estudados em Computação Gráfica — permitindo desenhar retas, curvas, polígonos e sólidos 3D pixel a pixel em um canvas 2D.
 
 ![Imagem Interface Principal](/docs/img/interface-principal.png)
 
@@ -82,18 +82,11 @@ python main.py
 3. Clique em **"Desenhar"** para rasterizar o resultado no canvas.
 4. Clique em **"Limpar"** para apagar o canvas e recomeçar.
 
-**Exemplos práticos:**
-
-- **Reta de Bresenham:** selecione "Bresenham", informe X1=`-5`, Y1=`-3`, X2=`5`, Y2=`4` e clique em Desenhar.
-- **Recorte de Linhas:** selecione "Recorte de Linhas", informe uma linha maior que a janela (ex: X1=`-8`, Y1=`-2`, X2=`8`, Y2=`6`) e uma janela menor (Xmin=`-4`, Ymin=`-3`, Xmax=`4`, Ymax=`4`) — a parte fora da janela azul é recortada.
-- **Transformações Geométricas:** adicione os vértices de um polígono na lista, escolha "Rotação", informe um ângulo e um pivô, e veja o polígono original (cinza) e o transformado (vermelho) lado a lado.
-- **Projeções 3D:** selecione "Projeções", clique em **"Usar cubo de exemplo"** para carregar automaticamente os 8 vértices e 12 arestas de um cubo, escolha o tipo de projeção (Ortográfica, Oblíqua ou Perspectiva) e clique em Desenhar.
-
 ## Estrutura do Projeto
 
 ```
 Algoritmos_Computacao_Grafica/
-├── algoritmos/              
+├── algoritmos/
 │   ├── bresenham.py
 │   ├── circulo.py
 │   ├── curvas_de_bezier.py
@@ -105,16 +98,25 @@ Algoritmos_Computacao_Grafica/
 │   ├── recorte_poligono.py
 │   └── transformacoes_geometricas.py
 ├── ui/                       # Interface gráfica (PySide6)
-│   ├── canvas_widget.py       
-│   ├── main_window.py         
-│   └── painel_controles.py    
-├── docs/                     
-├── main.py                  
-└── requirements.txt           
+│   ├── canvas_widget.py
+│   ├── main_window.py
+│   └── painel_controles.py
+├── docs/
+│   ├── anotações.md
+│   └── img/
+│       └── interface-principal.png
+├── main.py
+└── requirements.txt         
 ```
 
 A separação segue o princípio de responsabilidade única: `algoritmos/` contém apenas a lógica matemática (testável isoladamente, sem depender do Qt), enquanto `ui/` cuida exclusivamente da interface e da interação com o usuário.
 
+**Exemplos práticos:**
+
+- **Reta de Bresenham:** selecione "Bresenham", informe X1=`-5`, Y1=`-3`, X2=`5`, Y2=`4` e clique em Desenhar.
+- **Recorte de Linhas:** selecione "Recorte de Linhas", informe uma linha maior que a janela (ex: X1=`-8`, Y1=`-2`, X2=`8`, Y2=`6`) e uma janela menor (Xmin=`-4`, Ymin=`-3`, Xmax=`4`, Ymax=`4`) — a parte fora da janela azul é recortada.
+- **Transformações Geométricas:** adicione os vértices de um polígono na lista, escolha "Rotação", informe um ângulo e um pivô, e veja o polígono original (cinza) e o transformado (vermelho) lado a lado.
+- **Projeções 3D:** selecione "Projeções", clique em **"Usar cubo de exemplo"** para carregar automaticamente os 8 vértices e 12 arestas de um cubo, escolha o tipo de projeção (Ortográfica, Oblíqua ou Perspectiva) e clique em Desenhar.
 
 
 ## Licença
