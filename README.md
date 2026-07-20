@@ -7,6 +7,8 @@ Nome: Fernanda dos Santos Borges
 
 Matrícula: 202311140014
 
+![Imagem Interface Principal](/docs/img/interface-principal.png)
+
 ## Status do Projeto
 
 > Projeto acadêmico desenvolvido para a disciplina de Computação Gráfica. Os algoritmos principais já estão implementados e funcionais; novas melhorias podem ser adicionadas em trabalho futuros.
