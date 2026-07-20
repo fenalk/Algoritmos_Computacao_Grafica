@@ -2,9 +2,6 @@
 
 Aplicação desktop em Python/PySide6 que implementa e visualiza, de forma interativa, os principais algoritmos de rasterização, recorte, transformação e projeção estudados em Computação Gráfica — permitindo desenhar retas, curvas, polígonos e sólidos 3D pixel a pixel em um canvas 2D.
 
-![Tela principal da aplicação](docs/img/tela-principal.png)
-
-
 ## Status do Projeto
 
 > Projeto acadêmico desenvolvido para a disciplina de Computação Gráfica. Os algoritmos principais já estão implementados e funcionais; novas melhorias podem ser adicionadas em trabalho futuros.
