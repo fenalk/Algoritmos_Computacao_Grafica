@@ -1,7 +1,4 @@
-## Aluna:
-Nome: Fernanda dos Santos Borges
 
-Matrícula: 202311140014
 
 # Algoritmos de Computação Gráfica
 
